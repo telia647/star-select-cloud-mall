@@ -1,0 +1,92 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: mall-gateway
+  # Middleware addresses are environment-specific. The localhost fallback is for local development only.
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${MALL_NACOS_ADDR:${MALL_VM_HOST:localhost}:8848}
+    sentinel:
+      transport:
+        dashboard: ${MALL_SENTINEL_DASHBOARD:${MALL_VM_HOST:localhost}:8858}
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: mall-auth
+              uri: lb://mall-auth
+              predicates:
+                - Path=/api/auth/**
+              filters:
+                - StripPrefix=1
+            - id: mall-user
+              uri: lb://mall-user
+              predicates:
+                - Path=/api/users/**
+              filters:
+                - StripPrefix=1
+            - id: mall-product-products
+              uri: lb://mall-product
+              predicates:
+                - Path=/api/products/**
+              filters:
+                - StripPrefix=1
+            - id: mall-product-categories
+              uri: lb://mall-product
+              predicates:
+                - Path=/api/categories/**
+              filters:
+                - StripPrefix=1
+            - id: mall-promotion
+              uri: lb://mall-promotion
+              predicates:
+                - Path=/api/promotions/**
+              filters:
+                - StripPrefix=1
+            - id: mall-cart
+              uri: lb://mall-cart
+              predicates:
+                - Path=/api/cart/**
+              filters:
+                - StripPrefix=1
+            - id: mall-order
+              uri: lb://mall-order
+              predicates:
+                - Path=/api/orders/**
+              filters:
+                - StripPrefix=1
+            - id: mall-inventory
+              uri: lb://mall-inventory
+              predicates:
+                - Path=/api/inventory/**
+              filters:
+                - StripPrefix=1
+            - id: mall-payment
+              uri: lb://mall-payment
+              predicates:
+                - Path=/api/payments/**
+              filters:
+                - StripPrefix=1
+
+mall:
+  jwt:
+    secret: ${MALL_JWT_SECRET:mall-demo-jwt-secret-key-for-local-development}
+  cors:
+    allowed-origin-patterns: ${MALL_CORS_ALLOWED_ORIGIN_PATTERNS:http://localhost:5173}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%X{traceId}] %logger{36} - %msg%n"

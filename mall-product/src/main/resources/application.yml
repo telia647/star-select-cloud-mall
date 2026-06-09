@@ -1,0 +1,59 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: mall-product
+  # Middleware addresses and credentials are environment-specific. Defaults are local development fallbacks only.
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${MALL_NACOS_ADDR:${MALL_VM_HOST:localhost}:8848}
+    sentinel:
+      transport:
+        dashboard: ${MALL_SENTINEL_DASHBOARD:${MALL_VM_HOST:localhost}:8858}
+  # Override MALL_REDIS_* outside local acceptance, especially when Redis auth is enabled.
+  data:
+    redis:
+      host: ${MALL_REDIS_HOST:${MALL_VM_HOST:localhost}}
+      port: ${MALL_REDIS_PORT:6379}
+      password: ${MALL_REDIS_PASSWORD:}
+      timeout: 3s
+  # Override MALL_MYSQL_* outside local acceptance; do not use root/root in shared or production environments.
+  datasource:
+    url: jdbc:mysql://${MALL_MYSQL_HOST:${MALL_VM_HOST:localhost}}:${MALL_MYSQL_PORT:3306}/mall_product?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    username: ${MALL_MYSQL_USERNAME:root}
+    password: ${MALL_MYSQL_PASSWORD:root}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      id-type: assign_id
+
+mall:
+  jwt:
+    secret: ${MALL_JWT_SECRET:mall-demo-jwt-secret-key-for-local-development}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%X{traceId}] %logger{36} - %msg%n"

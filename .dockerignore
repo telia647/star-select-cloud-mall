@@ -1,0 +1,12 @@
+.git
+.idea
+.vscode
+.m2
+target
+**/target
+mall-web/node_modules
+mall-web/dist
+mall-web/vite*.log
+*.iml
+*.iws
+*.ipr

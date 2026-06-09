@@ -1,0 +1,25 @@
+CREATE TABLE IF NOT EXISTS ums_user (
+    id BIGINT PRIMARY KEY,
+    username VARCHAR(32) NOT NULL,
+    password VARCHAR(128) NOT NULL,
+    phone VARCHAR(20) NULL,
+    status TINYINT NOT NULL DEFAULT 1,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_ums_user_username (username),
+    KEY idx_ums_user_phone (phone)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS ums_user_address (
+    id BIGINT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    receiver_name VARCHAR(64) NOT NULL,
+    phone VARCHAR(20) NOT NULL,
+    province VARCHAR(64) NOT NULL,
+    city VARCHAR(64) NOT NULL,
+    detail_address VARCHAR(255) NOT NULL,
+    default_flag TINYINT NOT NULL DEFAULT 0,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    KEY idx_ums_user_address_user_id (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

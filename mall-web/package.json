@@ -1,0 +1,26 @@
+{
+  "name": "mall-web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "dev:background": "node scripts/vite-dev.mjs",
+    "build": "vue-tsc --noEmit && vite build",
+    "preview": "vite preview --host 0.0.0.0"
+  },
+  "dependencies": {
+    "@vitejs/plugin-vue": "6.0.1",
+    "axios": "1.13.2",
+    "element-plus": "2.11.9",
+    "lucide-vue-next": "0.555.0",
+    "pinia": "3.0.4",
+    "vite": "7.2.7",
+    "vue": "3.5.25",
+    "vue-router": "4.6.3"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "vue-tsc": "3.1.5"
+  }
+}

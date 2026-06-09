@@ -1,0 +1,29 @@
+groups:
+  - name: mall-seckill
+    rules:
+      - alert: MallSeckillRejectedRateHigh
+        expr: sum(rate(mall_seckill_submit_total{result="rejected"}[5m])) / clamp_min(sum(rate(mall_seckill_submit_total[5m])), 1) > 0.2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Seckill rejected request ratio is high"
+          description: "More than 20% of seckill submit requests were rejected during the last 5 minutes."
+
+      - alert: MallSeckillOrderCreateFailures
+        expr: sum(rate(mall_seckill_order_total{result="failed"}[5m])) > 0
+        for: 3m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Seckill order creation failures detected"
+          description: "At least one seckill order creation failure was observed in the last 5 minutes."
+
+      - alert: MallSeckillSubmitP95Slow
+        expr: histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{uri="/orders/seckill"}[5m])) by (le)) > 1.5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Seckill submit p95 latency is slow"
+          description: "The p95 latency of /orders/seckill has been above 1.5s for 5 minutes."

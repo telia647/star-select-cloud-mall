@@ -1,0 +1,35 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: mall-auth
+  # Middleware addresses are environment-specific. The localhost fallback is for local development only.
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${MALL_NACOS_ADDR:${MALL_VM_HOST:localhost}:8848}
+
+mall:
+  jwt:
+    secret: ${MALL_JWT_SECRET:mall-demo-jwt-secret-key-for-local-development}
+    access-token-ttl-seconds: 7200
+    refresh-token-ttl-seconds: 604800
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%X{traceId}] %logger{36} - %msg%n"

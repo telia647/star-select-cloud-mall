@@ -1,0 +1,163 @@
+x-mall-app-env: &mall-app-env
+  MALL_NACOS_ADDR: nacos:8848
+  MALL_MYSQL_HOST: mysql
+  MALL_MYSQL_PORT: 3306
+  MALL_MYSQL_USERNAME: root
+  MALL_MYSQL_PASSWORD: root
+  MALL_REDIS_HOST: redis
+  MALL_REDIS_PORT: 6379
+  MALL_ROCKETMQ_NAME_SERVER: rocketmq-namesrv:9876
+  MALL_SENTINEL_DASHBOARD: host.docker.internal:8858
+  MALL_CORS_ALLOWED_ORIGIN_PATTERNS: http://localhost:5173,http://localhost:4173
+  MALL_JWT_SECRET: ${MALL_JWT_SECRET:-replace-with-at-least-32-byte-secret-for-local}
+
+x-mall-build: &mall-build
+  context: ..
+  dockerfile: Dockerfile
+
+services:
+  mall-auth:
+    image: mall-auth:local
+    build:
+      <<: *mall-build
+      args:
+        SERVICE: mall-auth
+    environment:
+      <<: *mall-app-env
+    depends_on:
+      - mysql
+      - nacos
+    ports:
+      - "8081:8081"
+
+  mall-user:
+    image: mall-user:local
+    build:
+      <<: *mall-build
+      args:
+        SERVICE: mall-user
+    environment:
+      <<: *mall-app-env
+    depends_on:
+      - mysql
+      - nacos
+    ports:
+      - "8082:8082"
+
+  mall-product:
+    image: mall-product:local
+    build:
+      <<: *mall-build
+      args:
+        SERVICE: mall-product
+    environment:
+      <<: *mall-app-env
+    depends_on:
+      - mysql
+      - redis
+      - nacos
+    ports:
+      - "8083:8083"
+
+  mall-promotion:
+    image: mall-promotion:local
+    build:
+      <<: *mall-build
+      args:
+        SERVICE: mall-promotion
+    environment:
+      <<: *mall-app-env
+    depends_on:
+      - mysql
+      - redis
+      - nacos
+    ports:
+      - "8089:8089"
+
+  mall-inventory:
+    image: mall-inventory:local
+    build:
+      <<: *mall-build
+      args:
+        SERVICE: mall-inventory
+    environment:
+      <<: *mall-app-env
+    depends_on:
+      - mysql
+      - nacos
+    ports:
+      - "8085:8085"
+
+  mall-order:
+    image: mall-order:local
+    build:
+      <<: *mall-build
+      args:
+        SERVICE: mall-order
+    environment:
+      <<: *mall-app-env
+    depends_on:
+      - mysql
+      - redis
+      - nacos
+      - rocketmq-namesrv
+      - rocketmq-broker
+      - mall-product
+      - mall-promotion
+      - mall-inventory
+    ports:
+      - "8084:8084"
+
+  mall-payment:
+    image: mall-payment:local
+    build:
+      <<: *mall-build
+      args:
+        SERVICE: mall-payment
+    environment:
+      <<: *mall-app-env
+    depends_on:
+      - mysql
+      - nacos
+      - rocketmq-namesrv
+      - rocketmq-broker
+      - mall-order
+    ports:
+      - "8087:8087"
+
+  mall-cart:
+    image: mall-cart:local
+    build:
+      <<: *mall-build
+      args:
+        SERVICE: mall-cart
+    environment:
+      <<: *mall-app-env
+    depends_on:
+      - mysql
+      - nacos
+      - mall-product
+      - mall-order
+    ports:
+      - "8086:8086"
+
+  mall-gateway:
+    image: mall-gateway:local
+    build:
+      <<: *mall-build
+      args:
+        SERVICE: mall-gateway
+    environment:
+      <<: *mall-app-env
+    depends_on:
+      - nacos
+      - mall-auth
+      - mall-user
+      - mall-product
+      - mall-promotion
+      - mall-cart
+      - mall-order
+      - mall-inventory
+      - mall-payment
+    ports:
+      - "8080:8080"

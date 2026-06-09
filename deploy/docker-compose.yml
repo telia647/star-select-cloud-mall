@@ -1,0 +1,140 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: mall-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_ROOT_HOST: "%"
+      TZ: Asia/Shanghai
+    ports:
+      - "3306:3306"
+    volumes:
+      - mall-mysql-data:/var/lib/mysql
+      - ./mysql/init:/docker-entrypoint-initdb.d
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_0900_ai_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7.4
+    container_name: mall-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - mall-redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  nacos:
+    image: nacos/nacos-server:v3.0.3
+    container_name: mall-nacos
+    environment:
+      JVM_XMS: 256m
+      JVM_XMX: 512m
+      JVM_XMN: 128m
+      MODE: standalone
+      NACOS_AUTH_ENABLE: "false"
+      NACOS_AUTH_TOKEN: "bWFsbC1uYWNvcy1kZW1vLXNlY3JldC1rZXktMzItYnl0ZXM="
+      NACOS_AUTH_IDENTITY_KEY: "mall"
+      NACOS_AUTH_IDENTITY_VALUE: "mall-nacos"
+    ports:
+      - "8848:8848"
+      - "9848:9848"
+      - "9849:9849"
+
+  rocketmq-namesrv:
+    image: apache/rocketmq:5.3.1
+    container_name: mall-rocketmq-namesrv
+    ports:
+      - "9876:9876"
+    command: ["sh", "mqnamesrv"]
+
+  rocketmq-broker:
+    image: apache/rocketmq:5.3.1
+    container_name: mall-rocketmq-broker
+    depends_on:
+      - rocketmq-namesrv
+    ports:
+      - "10909:10909"
+      - "10911:10911"
+    environment:
+      NAMESRV_ADDR: rocketmq-namesrv:9876
+      JAVA_OPT_EXT: "-Xms256m -Xmx512m -Xmn128m -XX:MaxDirectMemorySize=256m"
+      MALL_VM_HOST: ${MALL_VM_HOST:-127.0.0.1}
+      MALL_ROCKETMQ_BROKER_IP: ${MALL_ROCKETMQ_BROKER_IP:-}
+    command:
+      - sh
+      - -c
+      - |
+        BROKER_IP="$${MALL_ROCKETMQ_BROKER_IP:-$${MALL_VM_HOST:-127.0.0.1}}"
+        cat > /tmp/broker.conf <<EOF
+        brokerClusterName=DefaultCluster
+        brokerName=broker-a
+        brokerId=0
+        brokerRole=ASYNC_MASTER
+        flushDiskType=ASYNC_FLUSH
+        listenPort=10911
+        brokerIP1=$${BROKER_IP}
+        autoCreateTopicEnable=true
+        EOF
+        sh mqbroker -n rocketmq-namesrv:9876 -c /tmp/broker.conf
+
+  rocketmq-dashboard:
+    image: apacherocketmq/rocketmq-dashboard:latest
+    container_name: mall-rocketmq-dashboard
+    depends_on:
+      - rocketmq-namesrv
+    environment:
+      JAVA_OPTS: "-Drocketmq.namesrv.addr=rocketmq-namesrv:9876"
+    ports:
+      - "8088:8080"
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: mall-prometheus
+    profiles:
+      - observability
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/rules:/etc/prometheus/rules:ro
+      - mall-prometheus-data:/prometheus
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.enable-lifecycle
+
+  grafana:
+    image: grafana/grafana:11.1.4
+    container_name: mall-grafana
+    profiles:
+      - observability
+    depends_on:
+      - prometheus
+    ports:
+      - "3000:3000"
+    volumes:
+      - mall-grafana-data:/var/lib/grafana
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+
+volumes:
+  mall-mysql-data:
+  mall-redis-data:
+  mall-prometheus-data:
+  mall-grafana-data:

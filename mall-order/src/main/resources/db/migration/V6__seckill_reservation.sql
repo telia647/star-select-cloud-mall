@@ -1,0 +1,20 @@
+CREATE TABLE IF NOT EXISTS oms_seckill_reservation (
+    id BIGINT PRIMARY KEY,
+    request_id VARCHAR(64) NOT NULL,
+    order_no VARCHAR(64) NOT NULL,
+    user_id BIGINT NOT NULL,
+    activity_id BIGINT NOT NULL,
+    session_id BIGINT NOT NULL,
+    seckill_sku_id BIGINT NOT NULL,
+    sku_id BIGINT NOT NULL,
+    quantity INT NOT NULL,
+    status TINYINT NOT NULL DEFAULT 1 COMMENT '1 reserved, 2 released, 3 paid',
+    release_time DATETIME NULL,
+    paid_time DATETIME NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_oms_seckill_reservation_request_id (request_id),
+    UNIQUE KEY uk_oms_seckill_reservation_order_no (order_no),
+    KEY idx_oms_seckill_reservation_user_sku (user_id, activity_id, session_id, sku_id),
+    KEY idx_oms_seckill_reservation_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
