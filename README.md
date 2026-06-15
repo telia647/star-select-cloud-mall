@@ -55,7 +55,9 @@ The default local acceptance workflow is:
 VM Docker middleware + Windows/IDEA Java services + local Vue dev server
 ```
 
-The middleware stack is MySQL, Redis, Nacos, RocketMQ, RocketMQ Dashboard, and Sentinel Dashboard. MySQL/Redis/RocketMQ are the data and message middleware; Nacos provides service discovery; Sentinel provides traffic protection and dashboard visibility.
+The middleware stack is MySQL, Redis, Nacos, RocketMQ, RocketMQ Dashboard, and Sentinel Dashboard. MySQL/Redis/RocketMQ are the data and message middleware; Nacos provides service discovery; Sentinel provides traffic protection and dashboard visibility. The compose stack also runs a one-shot RocketMQ topic initializer for `order-paid-topic`, `seckill-order-topic`, and `inventory-deducted-topic`.
+
+The VM-side Docker Compose package is in [`deploy/`](deploy/README.md). Copy that directory to the VM, create `.env` from `.env.example`, set `MALL_VM_HOST` to the current VM IP, then run `docker compose up -d --build`.
 
 Use the VM middleware address explicitly. VM IPs are environment-specific, so replace `<your-vm-ip>` with the address shown by your VM:
 
@@ -87,6 +89,13 @@ If the VM MySQL already exists but a service database is missing, create the req
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\init-vm-databases.ps1
+```
+
+If an existing VM RocketMQ stack was started before the topic initializer was added, run this once on the VM:
+
+```bash
+cd deploy
+docker compose up rocketmq-init
 ```
 
 Start one backend service from a shell with the VM environment already injected:

@@ -3,7 +3,7 @@ services:
     image: mysql:8.4
     container_name: mall-mysql
     environment:
-      MYSQL_ROOT_PASSWORD: root
+      MYSQL_ROOT_PASSWORD: ${MALL_MYSQL_ROOT_PASSWORD:-root}
       MYSQL_ROOT_HOST: "%"
       TZ: Asia/Shanghai
     ports:
@@ -15,7 +15,7 @@ services:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_0900_ai_ci
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$${MYSQL_ROOT_PASSWORD}"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -68,6 +68,8 @@ services:
     environment:
       NAMESRV_ADDR: rocketmq-namesrv:9876
       JAVA_OPT_EXT: "-Xms256m -Xmx512m -Xmn128m -XX:MaxDirectMemorySize=256m"
+      # MALL_VM_HOST is the VM IP reachable from Windows/IDEA. Override broker IP only
+      # when Docker or VM networking exposes a different address to Java clients.
       MALL_VM_HOST: ${MALL_VM_HOST:-127.0.0.1}
       MALL_ROCKETMQ_BROKER_IP: ${MALL_ROCKETMQ_BROKER_IP:-}
     command:
@@ -87,6 +89,31 @@ services:
         EOF
         sh mqbroker -n rocketmq-namesrv:9876 -c /tmp/broker.conf
 
+  rocketmq-init:
+    image: apache/rocketmq:5.3.1
+    container_name: mall-rocketmq-init
+    depends_on:
+      - rocketmq-namesrv
+      - rocketmq-broker
+    restart: "no"
+    command:
+      - sh
+      - -c
+      - |
+        set -e
+        TOPICS="order-paid-topic seckill-order-topic inventory-deducted-topic"
+        for i in $$(seq 1 30); do
+          if sh mqadmin clusterList -n rocketmq-namesrv:9876 >/dev/null 2>&1; then
+            break
+          fi
+          echo "waiting for RocketMQ broker registration ($$i/30)"
+          sleep 2
+        done
+        for topic in $$TOPICS; do
+          sh mqadmin updateTopic -n rocketmq-namesrv:9876 -c DefaultCluster -t $$topic -r 4 -w 4
+        done
+        echo "RocketMQ topics initialized: $$TOPICS"
+
   rocketmq-dashboard:
     image: apacherocketmq/rocketmq-dashboard:latest
     container_name: mall-rocketmq-dashboard
@@ -98,11 +125,12 @@ services:
       - "8088:8080"
 
   sentinel-dashboard:
-    image: mall-sentinel-dashboard:1.8.9
+    image: mall-sentinel-dashboard:${SENTINEL_VERSION:-1.8.9}
     build:
       context: ./sentinel-dashboard
       args:
-        SENTINEL_VERSION: 1.8.9
+        SENTINEL_VERSION: ${SENTINEL_VERSION:-1.8.9}
+        SENTINEL_DASHBOARD_JAR_URL: ${SENTINEL_DASHBOARD_JAR_URL:-https://gh.llkk.cc/https://github.com/alibaba/Sentinel/releases/download/1.8.9/sentinel-dashboard-1.8.9.jar}
     container_name: mall-sentinel-dashboard
     ports:
       - "8858:8858"

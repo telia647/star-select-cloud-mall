@@ -2,8 +2,9 @@ x-mall-app-env: &mall-app-env
   MALL_NACOS_ADDR: nacos:8848
   MALL_MYSQL_HOST: mysql
   MALL_MYSQL_PORT: 3306
-  MALL_MYSQL_USERNAME: root
-  MALL_MYSQL_PASSWORD: root
+  # Local Docker acceptance defaults. Override in .env for shared or deployed environments.
+  MALL_MYSQL_USERNAME: ${MALL_MYSQL_USERNAME:-root}
+  MALL_MYSQL_PASSWORD: ${MALL_MYSQL_PASSWORD:-root}
   MALL_REDIS_HOST: redis
   MALL_REDIS_PORT: 6379
   MALL_ROCKETMQ_NAME_SERVER: rocketmq-namesrv:9876
@@ -94,17 +95,27 @@ services:
       <<: *mall-build
       args:
         SERVICE: mall-order
+    depends_on:
+      mysql:
+        condition: service_started
+      redis:
+        condition: service_started
+      nacos:
+        condition: service_started
+      rocketmq-namesrv:
+        condition: service_started
+      rocketmq-broker:
+        condition: service_started
+      rocketmq-init:
+        condition: service_completed_successfully
+      mall-product:
+        condition: service_started
+      mall-promotion:
+        condition: service_started
+      mall-inventory:
+        condition: service_started
     environment:
       <<: *mall-app-env
-    depends_on:
-      - mysql
-      - redis
-      - nacos
-      - rocketmq-namesrv
-      - rocketmq-broker
-      - mall-product
-      - mall-promotion
-      - mall-inventory
     ports:
       - "8084:8084"
 
@@ -114,14 +125,21 @@ services:
       <<: *mall-build
       args:
         SERVICE: mall-payment
+    depends_on:
+      mysql:
+        condition: service_started
+      nacos:
+        condition: service_started
+      rocketmq-namesrv:
+        condition: service_started
+      rocketmq-broker:
+        condition: service_started
+      rocketmq-init:
+        condition: service_completed_successfully
+      mall-order:
+        condition: service_started
     environment:
       <<: *mall-app-env
-    depends_on:
-      - mysql
-      - nacos
-      - rocketmq-namesrv
-      - rocketmq-broker
-      - mall-order
     ports:
       - "8087:8087"
 
@@ -131,13 +149,13 @@ services:
       <<: *mall-build
       args:
         SERVICE: mall-cart
-    environment:
-      <<: *mall-app-env
     depends_on:
       - mysql
       - nacos
       - mall-product
       - mall-order
+    environment:
+      <<: *mall-app-env
     ports:
       - "8086:8086"
 
@@ -147,8 +165,6 @@ services:
       <<: *mall-build
       args:
         SERVICE: mall-gateway
-    environment:
-      <<: *mall-app-env
     depends_on:
       - nacos
       - mall-auth
@@ -159,5 +175,7 @@ services:
       - mall-order
       - mall-inventory
       - mall-payment
+    environment:
+      <<: *mall-app-env
     ports:
       - "8080:8080"

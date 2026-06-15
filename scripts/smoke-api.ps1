@@ -12,6 +12,33 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+function Ensure-RunningSession {
+    param(
+        [Parameter(Mandatory = $true)][long]$TargetActivityId,
+        [Parameter(Mandatory = $true)][long]$TargetSessionId,
+        [Parameter(Mandatory = $true)][string]$AdminToken
+    )
+    $sessions = Invoke-Api -Method "GET" -Path "/promotions/seckill/sessions"
+    $session = $sessions | Where-Object { $_.id -eq $TargetSessionId } | Select-Object -First 1
+    if ($session -and $session.state -eq "RUNNING") {
+        return
+    }
+
+    $now = Get-Date
+    $startTime = $now.AddMinutes(-10).ToString("yyyy-MM-ddTHH:mm:ss")
+    $endTime = $now.AddMinutes(50).ToString("yyyy-MM-ddTHH:mm:ss")
+    Invoke-Api -Method "POST" -Path "/promotions/admin/seckill/sessions" -Token $AdminToken -Body @{
+        id = $TargetSessionId
+        activityId = $TargetActivityId
+        name = "Smoke Session"
+        startTime = $startTime
+        endTime = $endTime
+        status = 1
+        sort = 1
+    } | Out-Null
+    Write-Host "[OK]   smoke session refreshed: $TargetSessionId"
+}
+
 function Invoke-Api {
     param(
         [Parameter(Mandatory = $true)][string]$Method,
@@ -88,6 +115,8 @@ if (-not $RunSeckill) {
     exit 0
 }
 
+Ensure-RunningSession -TargetActivityId $ActivityId -TargetSessionId $SessionId -AdminToken $adminToken
+
 Invoke-Api -Method "POST" -Path "/orders/seckill/stocks" -Token $adminToken -Body @{
     activityId = $ActivityId
     sessionId = $SessionId
@@ -125,6 +154,10 @@ for ($i = 0; $i -lt 10; $i++) {
     $result = Invoke-Api -Method "GET" -Path "/orders/seckill/$requestId" -Token $memberToken
     Write-Host "[OK]   seckill result poll $($i + 1): $($result.status)"
     if ($result.status -eq "CREATED" -or $result.status -eq "FAILED") {
+        Write-Host "[OK]   seckill final result: $($result.status)"
+        exit 0
         break
     }
 }
+
+throw "seckill request did not reach a final state after polling"

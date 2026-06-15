@@ -1,8 +1,9 @@
 FROM eclipse-temurin:17-jre
 
 ARG SENTINEL_VERSION=1.8.9
+ARG SENTINEL_DASHBOARD_JAR_URL=https://gh.llkk.cc/https://github.com/alibaba/Sentinel/releases/download/1.8.9/sentinel-dashboard-1.8.9.jar
 
-ADD https://github.com/alibaba/Sentinel/releases/download/${SENTINEL_VERSION}/sentinel-dashboard-${SENTINEL_VERSION}.jar /app/sentinel-dashboard.jar
+ADD ${SENTINEL_DASHBOARD_JAR_URL} /app/sentinel-dashboard.jar
 
 ENV JAVA_OPTS="-Xms128m -Xmx256m"
 

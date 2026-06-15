@@ -2,7 +2,7 @@
 
 ## Startup Order
 
-1. Confirm VM middleware is running: MySQL, Redis, Nacos, RocketMQ NameServer, RocketMQ Broker.
+1. Confirm VM middleware is running: MySQL, Redis, Nacos, RocketMQ NameServer, RocketMQ Broker, and that `rocketmq-init` has completed once.
 2. Start infrastructure-facing services:
    - `mall-user`
    - `mall-auth`
@@ -57,6 +57,14 @@ Before starting Java services, verify VM middleware connectivity:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\check-vm-middleware.ps1
+```
+
+If RocketMQ was started from an older deploy package, initialize business topics once on the VM:
+
+```bash
+cd deploy
+docker compose up rocketmq-init
+docker compose logs rocketmq-init
 ```
 
 If databases are missing in the existing VM MySQL instance, create them idempotently:
@@ -173,6 +181,20 @@ Wrong examples:
 MALL_ROCKETMQ_NAME_SERVE R
 MALL_ROCKETMQ_NAMESERVER
 ```
+
+### RocketMQ Topic Or Subscription Warnings
+
+Symptoms:
+
+```text
+No topic route info in name server for the topic
+the consumer's subscription not exist
+```
+
+Fix:
+
+- Run `docker compose up rocketmq-init` in the VM `deploy` directory to create business topics.
+- Keep each logical consumer subscription on its own RocketMQ group. For this project, order payment and seckill order creation use separate groups: `mall-order-paid` and `mall-order-seckill`.
 
 ### Flyway Fails On New Service
 

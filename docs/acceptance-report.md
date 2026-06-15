@@ -1,6 +1,6 @@
 # Acceptance Report
 
-Date: 2026-06-09
+Date: 2026-06-15
 
 Scope: local Windows Java services, Vue front-end build, and VM Docker middleware acceptance. Middleware IPs and credentials are environment-specific; the local VM address used during this run is not a project constant.
 
@@ -12,7 +12,7 @@ Scope: local Windows Java services, Vue front-end build, and VM Docker middlewar
 | Java runtime | Java 25 local runtime; CI uses JDK 17 |
 | Backend | Spring Boot 3.5.0, Spring Cloud Alibaba |
 | Front-end | Vue 3, Vite |
-| Middleware | VM Docker MySQL, Redis, Nacos, RocketMQ |
+| Middleware | VM Docker MySQL, Redis, Nacos, RocketMQ, Sentinel Dashboard |
 | Gateway | `http://localhost:8080/api` |
 
 ## Verification Summary
@@ -41,19 +41,21 @@ Real seckill smoke:
 [OK]   seckill final result: CREATED
 ```
 
+The final acceptance run also verified that the RocketMQ seckill consumer uses an isolated group (`mall-order-seckill`). A previous shared consumer group configuration caused `the consumer's subscription not exist` warnings and could leave seckill requests in `ACCEPTED`; this was corrected before the final `-RunSeckill` pass.
+
 Local concurrent seckill smoke:
 
 ```text
 Users=10 Concurrency=3 Stock=20
 [OK]   success=10 created=10 failed=0
-[OK]   min=702ms p95=1905ms max=1905ms
+[OK]   min=870ms p95=942ms max=942ms
 ```
 
 ## Residual Validation Gap
 
 k6 is not installed on the current Windows host, so the reproducible k6 run in `scripts/k6/seckill.js` was not executed locally. The k6 script and thresholds are kept in `docs/performance-testing.md` for a Docker/k6-enabled machine or later GitHub evidence.
 
-Sentinel gateway rules are implemented in code and the Dashboard is included in Docker Compose on port `8858`. If an older VM middleware stack is already running, update the VM compose stack before recording the final Sentinel Dashboard readiness line.
+Sentinel gateway rules are implemented in code and the Dashboard is included in Docker Compose on port `8858`. If an older VM middleware stack is already running, update the VM compose stack and run `docker compose up rocketmq-init` once so RocketMQ business topics are present before recording final evidence.
 
 ## Release Decision
 

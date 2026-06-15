@@ -21,11 +21,11 @@ spring:
       bindings:
         orderPaidConsumer-in-0:
           destination: order-paid-topic
-          group: mall-order
+          group: mall-order-paid
           content-type: application/json
         seckillOrderConsumer-in-0:
           destination: seckill-order-topic
-          group: mall-order
+          group: mall-order-seckill
           content-type: application/json
         inventoryDeducted-out-0:
           destination: inventory-deducted-topic

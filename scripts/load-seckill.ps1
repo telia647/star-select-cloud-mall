@@ -54,6 +54,31 @@ function Login {
     return $data.accessToken
 }
 
+function Ensure-RunningSession {
+    param(
+        [Parameter(Mandatory = $true)][long]$TargetActivityId,
+        [Parameter(Mandatory = $true)][long]$TargetSessionId,
+        [Parameter(Mandatory = $true)][string]$AdminToken
+    )
+    $sessions = Invoke-Api -Method "GET" -Path "/promotions/seckill/sessions"
+    $session = $sessions | Where-Object { $_.id -eq $TargetSessionId } | Select-Object -First 1
+    if ($session -and $session.state -eq "RUNNING") {
+        return
+    }
+
+    $now = Get-Date
+    Invoke-Api -Method "POST" -Path "/promotions/admin/seckill/sessions" -Token $AdminToken -Body @{
+        id = $TargetSessionId
+        activityId = $TargetActivityId
+        name = "Load Smoke Session"
+        startTime = $now.AddMinutes(-10).ToString("yyyy-MM-ddTHH:mm:ss")
+        endTime = $now.AddMinutes(50).ToString("yyyy-MM-ddTHH:mm:ss")
+        status = 1
+        sort = 1
+    } | Out-Null
+    Write-Host "[OK]   load smoke session refreshed: $TargetSessionId"
+}
+
 if ($Users -le 0) {
     throw "Users must be greater than 0"
 }
@@ -65,6 +90,7 @@ Write-Host "Running seckill load smoke against $BaseUrl"
 Write-Host "Users=$Users Concurrency=$Concurrency Stock=$Stock"
 
 $adminToken = Login -LoginUsername $AdminUsername -LoginPassword $AdminPassword
+Ensure-RunningSession -TargetActivityId $ActivityId -TargetSessionId $SessionId -AdminToken $adminToken
 Invoke-Api -Method "POST" -Path "/orders/seckill/stocks" -Token $adminToken -Body @{
     activityId = $ActivityId
     sessionId = $SessionId
@@ -152,11 +178,25 @@ $worker = {
             requestId = $requestId
         }
 
+        $status = $submit.status
+        $message = $submit.message
+        if ($status -eq "ACCEPTED") {
+            for ($attempt = 1; $attempt -le 20; $attempt++) {
+                Start-Sleep -Milliseconds 500
+                $result = Invoke-WorkerApi -Method "GET" -Path "/orders/seckill/$requestId" -Token $token
+                $status = $result.status
+                $message = $result.message
+                if ($status -eq "CREATED" -or $status -eq "FAILED") {
+                    break
+                }
+            }
+        }
+
         [pscustomobject]@{
             Username = $Username
             Success = $true
-            Status = $submit.status
-            Message = $submit.message
+            Status = $status
+            Message = $message
             LatencyMs = $sw.ElapsedMilliseconds
         }
     } catch {
@@ -201,6 +241,7 @@ $duration = (Get-Date) - $started
 $successes = @($results | Where-Object { $_.Success })
 $failures = @($results | Where-Object { -not $_.Success })
 $created = @($successes | Where-Object { $_.Status -eq "CREATED" })
+$pending = @($successes | Where-Object { $_.Status -eq "ACCEPTED" })
 
 Write-Host "[OK]   completed in $([Math]::Round($duration.TotalSeconds, 2))s"
 Write-Host "[OK]   success=$($successes.Count) created=$($created.Count) failed=$($failures.Count)"
@@ -208,6 +249,18 @@ Write-Host "[OK]   success=$($successes.Count) created=$($created.Count) failed=
 if ($failures.Count -gt 0) {
     Write-Host "[FAIL] failures:"
     $failures | Select-Object -First 10 Username,Message,LatencyMs | Format-Table -AutoSize
+    exit 1
+}
+
+if ($pending.Count -gt 0) {
+    Write-Host "[FAIL] pending requests:"
+    $pending | Select-Object -First 10 Username,Status,Message,LatencyMs | Format-Table -AutoSize
+    exit 1
+}
+
+if ($Stock -ge $Users -and $created.Count -ne $Users) {
+    Write-Host "[FAIL] expected all users to create orders when stock is sufficient"
+    $results | Select-Object Username,Status,Message,LatencyMs | Format-Table -AutoSize
     exit 1
 }
 

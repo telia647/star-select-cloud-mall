@@ -38,6 +38,10 @@ public class Result<T> {
         return code == ErrorCode.SUCCESS.getCode();
     }
 
+    public void setSuccess(boolean success) {
+        // Computed from code; this setter only allows peer services to deserialize JSON responses.
+    }
+
     public int getCode() {
         return code;
     }
