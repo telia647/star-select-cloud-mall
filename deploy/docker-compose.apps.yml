@@ -7,7 +7,7 @@ x-mall-app-env: &mall-app-env
   MALL_REDIS_HOST: redis
   MALL_REDIS_PORT: 6379
   MALL_ROCKETMQ_NAME_SERVER: rocketmq-namesrv:9876
-  MALL_SENTINEL_DASHBOARD: host.docker.internal:8858
+  MALL_SENTINEL_DASHBOARD: ${MALL_SENTINEL_DASHBOARD:-sentinel-dashboard:8858}
   MALL_CORS_ALLOWED_ORIGIN_PATTERNS: http://localhost:5173,http://localhost:4173
   MALL_JWT_SECRET: ${MALL_JWT_SECRET:-replace-with-at-least-32-byte-secret-for-local}
 

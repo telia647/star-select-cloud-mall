@@ -7,7 +7,8 @@ param(
     [string]$MysqlPassword = $env:MALL_MYSQL_PASSWORD,
     [string]$RedisHost = $env:MALL_REDIS_HOST,
     [string]$RedisPort = $env:MALL_REDIS_PORT,
-    [string]$RocketMqNameServer = $env:MALL_ROCKETMQ_NAME_SERVER
+    [string]$RocketMqNameServer = $env:MALL_ROCKETMQ_NAME_SERVER,
+    [string]$SentinelDashboard = $env:MALL_SENTINEL_DASHBOARD
 )
 
 $ErrorActionPreference = "Continue"
@@ -46,6 +47,9 @@ if ([string]::IsNullOrWhiteSpace($RedisPort)) {
 if ([string]::IsNullOrWhiteSpace($RocketMqNameServer)) {
     $RocketMqNameServer = "$VmHost`:9876"
 }
+if ([string]::IsNullOrWhiteSpace($SentinelDashboard)) {
+    $SentinelDashboard = "$VmHost`:8858"
+}
 
 function Split-Endpoint {
     param(
@@ -79,6 +83,7 @@ Write-Host "VM host: $VmHost"
 
 $nacos = Split-Endpoint -Endpoint $NacosAddr -DefaultPort 8848
 $rocketmq = Split-Endpoint -Endpoint $RocketMqNameServer -DefaultPort 9876
+$sentinel = Split-Endpoint -Endpoint $SentinelDashboard -DefaultPort 8858
 $allOk = $true
 
 $mysqlPortOk = Test-Port -Name "MySQL" -TargetHost $MysqlHost -Port ([int]$MysqlPort)
@@ -88,6 +93,7 @@ $allOk = (Test-Port -Name "Nacos" -TargetHost $nacos.Host -Port $nacos.Port) -an
 $allOk = (Test-Port -Name "RocketMQ NameServer" -TargetHost $rocketmq.Host -Port $rocketmq.Port) -and $allOk
 $allOk = (Test-Port -Name "RocketMQ Broker 10909" -TargetHost $VmHost -Port 10909) -and $allOk
 $allOk = (Test-Port -Name "RocketMQ Broker 10911" -TargetHost $VmHost -Port 10911) -and $allOk
+$allOk = (Test-Port -Name "Sentinel Dashboard" -TargetHost $sentinel.Host -Port $sentinel.Port) -and $allOk
 
 $mysql = Get-Command mysql -ErrorAction SilentlyContinue
 if ($mysql -and $mysqlPortOk) {
@@ -138,6 +144,7 @@ Write-Host "MALL_MYSQL_PASSWORD=$MysqlPassword"
 Write-Host "MALL_REDIS_HOST=$RedisHost"
 Write-Host "MALL_REDIS_PORT=$RedisPort"
 Write-Host "MALL_ROCKETMQ_NAME_SERVER=$RocketMqNameServer"
+Write-Host "MALL_SENTINEL_DASHBOARD=$SentinelDashboard"
 
 if (-not $allOk) {
     exit 1

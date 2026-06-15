@@ -97,6 +97,16 @@ services:
     ports:
       - "8088:8080"
 
+  sentinel-dashboard:
+    image: mall-sentinel-dashboard:1.8.9
+    build:
+      context: ./sentinel-dashboard
+      args:
+        SENTINEL_VERSION: 1.8.9
+    container_name: mall-sentinel-dashboard
+    ports:
+      - "8858:8858"
+
   prometheus:
     image: prom/prometheus:v2.54.1
     container_name: mall-prometheus

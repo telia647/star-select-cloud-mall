@@ -47,6 +47,22 @@ Grafana is provisioned automatically:
 
 Prometheus also loads alerting rules from `deploy/prometheus/rules/seckill-alerts.yml`.
 
+## Sentinel Dashboard
+
+Sentinel protects gateway traffic with startup rules in `GatewaySentinelConfiguration`. The Dashboard is included in the middleware compose file:
+
+```powershell
+cd deploy
+docker compose up -d --build sentinel-dashboard
+```
+
+Open:
+
+- Sentinel Dashboard: `http://localhost:8858`
+- Local credentials: `sentinel / sentinel`
+
+When Java services run on Windows and middleware runs inside a VM, set `MALL_SENTINEL_DASHBOARD=<vm-ip>:8858`. The VM connectivity script checks this port as part of the middleware readiness gate.
+
 ## Seckill Metrics
 
 `mall-order` publishes dedicated flash-sale counters:

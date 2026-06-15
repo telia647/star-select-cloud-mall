@@ -51,6 +51,7 @@ docs/assets/
 - `mvn -q -DskipTests package` passes.
 - `cd mall-web && npm.cmd run build` passes.
 - Backend services start against VM middleware or containerized middleware.
+- Sentinel Dashboard is reachable on `8858`, and gateway rules are documented in `docs/sentinel.md`.
 - Admin can create/update activity/session/SKU and preheat stock.
 - Member can browse catalog, issue seckill token, submit seckill, poll result, pay order.
 - `wms_stock_flow`, `oms_order_status_log`, `promo_operation_log`, and `oms_mq_consume_log` contain records after acceptance.

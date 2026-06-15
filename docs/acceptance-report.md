@@ -53,6 +53,8 @@ Users=10 Concurrency=3 Stock=20
 
 k6 is not installed on the current Windows host, so the reproducible k6 run in `scripts/k6/seckill.js` was not executed locally. The k6 script and thresholds are kept in `docs/performance-testing.md` for a Docker/k6-enabled machine or later GitHub evidence.
 
+Sentinel gateway rules are implemented in code and the Dashboard is included in Docker Compose on port `8858`. If an older VM middleware stack is already running, update the VM compose stack before recording the final Sentinel Dashboard readiness line.
+
 ## Release Decision
 
 Go for GitHub portfolio release after adding screenshots and, optionally, one k6 run from a machine with k6 installed.

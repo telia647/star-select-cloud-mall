@@ -43,6 +43,7 @@ $env:MALL_MYSQL_PASSWORD="root"
 $env:MALL_REDIS_HOST="${env:MALL_VM_HOST}"
 $env:MALL_REDIS_PORT="6379"
 $env:MALL_ROCKETMQ_NAME_SERVER="${env:MALL_VM_HOST}:9876"
+$env:MALL_SENTINEL_DASHBOARD="${env:MALL_VM_HOST}:8858"
 $env:MALL_JWT_SECRET="replace-with-at-least-32-byte-secret"
 ```
 
@@ -75,6 +76,26 @@ To start all packaged backend services against VM middleware:
 ```powershell
 .\mvnw.cmd -q -DskipTests package
 powershell -ExecutionPolicy Bypass -File .\scripts\start-backend-vm.ps1
+```
+
+## Sentinel Dashboard
+
+Sentinel gateway rules are defined in `mall-gateway/src/main/java/com/demo/mall/gateway/config/GatewaySentinelConfiguration.java`.
+
+The VM middleware stack should expose Sentinel Dashboard on port `8858`:
+
+```bash
+cd deploy
+export MALL_VM_HOST=<your-vm-ip>
+docker compose up -d --build sentinel-dashboard
+```
+
+Open `http://<your-vm-ip>:8858` with local credentials `sentinel / sentinel`.
+
+The readiness script expects:
+
+```text
+[OK]   Sentinel Dashboard <your-vm-ip>:8858
 ```
 
 Stop them with:

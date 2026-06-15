@@ -39,6 +39,7 @@ Spring Cloud Alibaba microservice mall focused on high-concurrency flash-sale or
 - [Runbook](docs/runbook.md)
 - [Performance Testing](docs/performance-testing.md)
 - [Observability](docs/observability.md)
+- [Sentinel Gateway Flow Control](docs/sentinel.md)
 - [RBAC And Access Governance](docs/rbac-governance.md)
 - [Production Risk Register](docs/risk-register.md)
 - [GitHub Release Guide](docs/github-release.md)
@@ -54,6 +55,8 @@ The default local acceptance workflow is:
 VM Docker middleware + Windows/IDEA Java services + local Vue dev server
 ```
 
+The middleware stack is MySQL, Redis, Nacos, RocketMQ, RocketMQ Dashboard, and Sentinel Dashboard. MySQL/Redis/RocketMQ are the data and message middleware; Nacos provides service discovery; Sentinel provides traffic protection and dashboard visibility.
+
 Use the VM middleware address explicitly. VM IPs are environment-specific, so replace `<your-vm-ip>` with the address shown by your VM:
 
 ```powershell
@@ -66,6 +69,7 @@ $env:MALL_MYSQL_PASSWORD="root"
 $env:MALL_REDIS_HOST="${env:MALL_VM_HOST}"
 $env:MALL_REDIS_PORT="6379"
 $env:MALL_ROCKETMQ_NAME_SERVER="${env:MALL_VM_HOST}:9876"
+$env:MALL_SENTINEL_DASHBOARD="${env:MALL_VM_HOST}:8858"
 $env:MALL_JWT_SECRET="replace-with-at-least-32-byte-secret"
 ```
 
@@ -98,6 +102,7 @@ Open these VM ports to the Windows host:
 - `8848`, `9848`, `9849` Nacos
 - `9876`, `10909`, `10911` RocketMQ
 - `8088` RocketMQ Dashboard
+- `8858` Sentinel Dashboard
 
 ## Optional Local Middleware
 
@@ -106,7 +111,7 @@ cd deploy
 docker compose up -d
 ```
 
-This starts MySQL, Redis, Nacos, RocketMQ NameServer, RocketMQ Broker, and RocketMQ Dashboard on the current machine. This is optional; the normal workflow for this repository can use middleware already running in the VM.
+This starts MySQL, Redis, Nacos, RocketMQ NameServer, RocketMQ Broker, RocketMQ Dashboard, and Sentinel Dashboard on the current machine. This is optional; the normal workflow for this repository can use middleware already running in the VM.
 
 Optional all-in-one Docker validation:
 
@@ -124,7 +129,7 @@ cd deploy
 docker compose --profile observability up -d
 ```
 
-This also starts Prometheus on `http://localhost:9090` and Grafana on `http://localhost:3000`.
+This also starts Prometheus on `http://localhost:9090` and Grafana on `http://localhost:3000`. Sentinel Dashboard is part of the default middleware stack and is available on `http://localhost:8858`.
 
 ## Starting Middleware In A VM
 
@@ -156,6 +161,7 @@ Open these VM ports to the Windows host:
 - `8848`, `9848`, `9849` Nacos
 - `9876`, `10909`, `10911` RocketMQ
 - `8088` RocketMQ Dashboard
+- `8858` Sentinel Dashboard
 
 Find the VM IP:
 
