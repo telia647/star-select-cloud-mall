@@ -77,7 +77,7 @@ min=702ms p95=1905ms max=1905ms
 
 ## Acceptance Notes
 
-For a resume/GitHub demonstration, keep at least one report with:
+For project release evidence, keep at least one report with:
 
 - Test date and commit.
 - Middleware machine specs.

@@ -47,7 +47,7 @@ Spring Cloud Alibaba microservice mall focused on high-concurrency flash-sale or
 - [GitHub Release Guide](docs/github-release.md)
 - [Production Readiness Audit](docs/production-readiness-audit.md)
 - [Acceptance Report](docs/acceptance-report.md)
-- [Resume Project Summary](docs/resume-summary.md)
+- [Project Summary](docs/project-summary.md)
 
 ## Screenshots
 

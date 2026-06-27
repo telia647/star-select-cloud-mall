@@ -1,10 +1,10 @@
-# Resume Project Summary
+# Project Summary
 
 ## One-Line Description
 
 Production-oriented Spring Cloud Alibaba flash-sale e-commerce system with C-side mall, B-side seckill operations, Redis Lua pre-deduct, RocketMQ async order creation, Flyway migrations, observability, and automated acceptance scripts.
 
-## Resume Bullets
+## Project Highlights
 
 - Built a microservice e-commerce system with Gateway, Auth, User, Product, Cart, Order, Inventory, Payment, Promotion, and Vue 3 front-end modules.
 - Designed a flash-sale order path using short-lived seckill tokens, Redis Lua atomic stock pre-deduct, duplicate buyer guard, server-side price validation, RocketMQ async order creation, and synchronous fallback.
@@ -12,7 +12,7 @@ Production-oriented Spring Cloud Alibaba flash-sale e-commerce system with C-sid
 - Delivered B-side seckill management for activity/session/SKU configuration, stock preheat, operation audit, order status timeline, and inventory flow diagnostics.
 - Added production-readiness assets: Flyway migrations, GitHub Actions CI, Testcontainers integration coverage, Prometheus metrics, Grafana dashboard, Sentinel gateway rules, k6 pressure-test script, runbook, risk register, and acceptance report.
 
-## Interview Talking Points
+## Technical Notes
 
 1. Hot-path stock is owned by Redis during the sale; MySQL stock is protected from direct high-concurrency writes.
 2. Lua combines token validation, duplicate buyer guard, and stock decrement into one atomic Redis operation.

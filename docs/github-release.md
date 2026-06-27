@@ -10,7 +10,7 @@ Short description:
 Production-oriented Spring Cloud Alibaba e-commerce system with C-side mall, B-side seckill operations, Redis Lua pre-deduct, RocketMQ async order creation, Flyway migrations, CI, k6 pressure testing, and Prometheus/Grafana observability.
 ```
 
-## Resume Highlights
+## Project Highlights
 
 - Built a Spring Cloud Alibaba microservice mall with Gateway, Auth, User, Product, Cart, Order, Inventory, Payment, Promotion, and Vue 3 front-end modules.
 - Designed a high-concurrency flash-sale flow using short-lived seckill tokens, Redis Lua atomic pre-deduct, duplicate buyer guard, RocketMQ async order creation, and synchronous fallback.
@@ -21,7 +21,7 @@ Production-oriented Spring Cloud Alibaba e-commerce system with C-side mall, B-s
 ## Evidence Documents
 
 - `docs/acceptance-report.md`
-- `docs/resume-summary.md`
+- `docs/project-summary.md`
 - `docs/production-readiness-audit.md`
 - `docs/risk-register.md`
 - `docs/performance-testing.md`

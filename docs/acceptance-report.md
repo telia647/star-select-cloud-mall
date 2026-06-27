@@ -89,4 +89,4 @@ Sentinel gateway rules are implemented in code and the Dashboard is included in 
 
 ## Release Decision
 
-Go for GitHub portfolio release after adding screenshots and, optionally, one k6 run from a machine with k6 installed.
+Go for GitHub release after adding screenshots and, optionally, one k6 run from a machine with k6 installed.
