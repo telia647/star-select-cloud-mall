@@ -3,8 +3,11 @@ import type {
   CategoryResponse,
   AdminIdResponse,
   LoginResponse,
+  MemberBenefit,
+  MemberCoupon,
   OrderCreateResponse,
   OrderDetail,
+  OrderListItem,
   OrderStatusLogResponse,
   PageResult,
   PaymentResponse,
@@ -73,89 +76,89 @@ const products: ProductDetail[] = [
   {
     id: 101,
     categoryId: 1,
-    name: 'Aurora 降噪头戴耳机',
+    name: '曜声降噪头戴耳机',
     subtitle: '自适应降噪、40 小时续航，适合通勤和专注办公。',
     status: 1,
     skus: [
-      buildSku(3001, 101, 'AURORA-BK', { 颜色: '曜石黑', 版本: '标准版' }, 799),
-      buildSku(3002, 101, 'AURORA-SL', { 颜色: '月光银', 版本: '旅行套装' }, 899)
+      buildSku(3001, 101, '耳机-黑色', { 颜色: '曜石黑', 版本: '标准版' }, 799),
+      buildSku(3002, 101, '耳机-银色', { 颜色: '月光银', 版本: '旅行套装' }, 899)
     ]
   },
   {
     id: 102,
     categoryId: 2,
-    name: 'BrewPro 温控手冲壶',
+    name: '沐刻温控手冲壶',
     subtitle: '精准控温、细口稳定水流，让日常咖啡更接近专业出品。',
     status: 1,
     skus: [
-      buildSku(3011, 102, 'BREWPRO-09', { 容量: '900ml', 颜色: '岩灰' }, 469),
-      buildSku(3012, 102, 'BREWPRO-12', { 容量: '1.2L', 颜色: '奶白' }, 529)
+      buildSku(3011, 102, '手冲壶-900ML', { 容量: '900ml', 颜色: '岩灰' }, 469),
+      buildSku(3012, 102, '手冲壶-1.2L', { 容量: '1.2L', 颜色: '奶白' }, 529)
     ]
   },
   {
     id: 103,
     categoryId: 4,
-    name: 'LumaLab 玻色因精华',
+    name: '光研玻色因精华',
     subtitle: '轻盈乳感质地，主打保湿、提亮和夜间修护。',
     status: 1,
     skus: [
-      buildSku(3021, 103, 'LUMA-30', { 规格: '30ml', 套组: '单瓶' }, 329),
-      buildSku(3022, 103, 'LUMA-60', { 规格: '60ml', 套组: '双瓶装' }, 579)
+      buildSku(3021, 103, '精华-30ML', { 规格: '30ml', 套组: '单瓶' }, 329),
+      buildSku(3022, 103, '精华-60ML', { 规格: '60ml', 套组: '双瓶装' }, 579)
     ]
   },
   {
     id: 104,
     categoryId: 3,
-    name: 'StrideX 缓震跑鞋',
+    name: '跃行缓震跑鞋',
     subtitle: '轻量回弹中底，兼顾日常慢跑和城市通勤。',
     status: 1,
     skus: [
-      buildSku(3031, 104, 'STRIDEX-42', { 尺码: '42', 颜色: '雾蓝' }, 639),
-      buildSku(3032, 104, 'STRIDEX-43', { 尺码: '43', 颜色: '炭黑' }, 639)
+      buildSku(3031, 104, '跑鞋-42码', { 尺码: '42', 颜色: '雾蓝' }, 639),
+      buildSku(3032, 104, '跑鞋-43码', { 尺码: '43', 颜色: '炭黑' }, 639)
     ]
   },
   {
     id: 105,
     categoryId: 2,
-    name: 'NestHub 香薰空气仪',
+    name: '巢境香薰空气仪',
     subtitle: '微雾扩香、空气状态提醒，适合卧室和办公桌。',
     status: 1,
     skus: [
-      buildSku(3041, 105, 'NESTHUB-WH', { 颜色: '暖白', 香氛: '雪松' }, 299),
-      buildSku(3042, 105, 'NESTHUB-GN', { 颜色: '薄荷绿', 香氛: '橙花' }, 319)
+      buildSku(3041, 105, '香薰仪-暖白', { 颜色: '暖白', 香氛: '雪松' }, 299),
+      buildSku(3042, 105, '香薰仪-薄荷绿', { 颜色: '薄荷绿', 香氛: '橙花' }, 319)
     ]
   },
   {
     id: 106,
     categoryId: 5,
-    name: 'UrbanPack 轻量通勤包',
+    name: '城行轻量通勤包',
     subtitle: '分层收纳、可放 15 英寸电脑，适合城市移动办公。',
     status: 1,
     skus: [
-      buildSku(3051, 106, 'URBAN-18', { 容量: '18L', 颜色: '深海蓝' }, 399),
-      buildSku(3052, 106, 'URBAN-24', { 容量: '24L', 颜色: '石墨灰' }, 459)
+      buildSku(3051, 106, '通勤包-18L', { 容量: '18L', 颜色: '深海蓝' }, 399),
+      buildSku(3052, 106, '通勤包-24L', { 容量: '24L', 颜色: '石墨灰' }, 459)
     ]
   },
   {
     id: 107,
     categoryId: 1,
-    name: 'Pulse Mini 智能音箱',
+    name: '脉点迷你智能音箱',
     subtitle: '小体积大声场，支持多房间联动和语音助手。',
     status: 1,
     skus: [
-      buildSku(3061, 107, 'PULSE-W', { 颜色: '云白', 套餐: '单只' }, 269),
-      buildSku(3062, 107, 'PULSE-PAIR', { 颜色: '云白', 套餐: '双只立体声' }, 499)
+      buildSku(3061, 107, '音箱-单只', { 颜色: '云白', 套餐: '单只' }, 269),
+      buildSku(3062, 107, '音箱-双只', { 颜色: '云白', 套餐: '双只立体声' }, 499)
     ]
   },
   {
     id: 108,
     categoryId: 5,
-    name: 'SoftLayer 羊毛混纺围巾',
+    name: '柔层羊毛混纺围巾',
     subtitle: '柔软亲肤、轻暖不厚重，是冬季搭配的实用单品。',
     status: 1,
     skus: [
-      buildSku(3071, 108, 'SOFT-CA', { 颜色: '驼色', 尺寸: '180cm' }, 219),
-      buildSku(3072, 108, 'SOFT-GY', { 颜色: '烟灰', 尺寸: '180cm' }, 219)
+      buildSku(3071, 108, '围巾-驼色', { 颜色: '驼色', 尺寸: '180cm' }, 219),
+      buildSku(3072, 108, '围巾-烟灰', { 颜色: '烟灰', 尺寸: '180cm' }, 219)
     ]
   }
 ]
@@ -251,6 +254,41 @@ const presentation: Record<number, Omit<ProductPresentation, 'priceFrom'>> = {
   }
 }
 
+const productImages: Record<number, { mainImage: string; galleryImages: string[] }> = {
+  101: {
+    mainImage: '/demo-products/headset.svg',
+    galleryImages: ['/demo-products/headset.svg', '/demo-products/speaker.svg', '/demo-products/phone.svg']
+  },
+  102: {
+    mainImage: '/demo-products/kettle.svg',
+    galleryImages: ['/demo-products/kettle.svg', '/demo-products/aroma.svg', '/demo-products/cleanser.svg']
+  },
+  103: {
+    mainImage: '/demo-products/serum.svg',
+    galleryImages: ['/demo-products/serum.svg', '/demo-products/cleanser.svg', '/demo-products/aroma.svg']
+  },
+  104: {
+    mainImage: '/demo-products/running-shoes.svg',
+    galleryImages: ['/demo-products/running-shoes.svg', '/demo-products/backpack.svg', '/demo-products/scarf.svg']
+  },
+  105: {
+    mainImage: '/demo-products/aroma.svg',
+    galleryImages: ['/demo-products/aroma.svg', '/demo-products/kettle.svg', '/demo-products/serum.svg']
+  },
+  106: {
+    mainImage: '/demo-products/backpack.svg',
+    galleryImages: ['/demo-products/backpack.svg', '/demo-products/notebook.svg', '/demo-products/running-shoes.svg']
+  },
+  107: {
+    mainImage: '/demo-products/speaker.svg',
+    galleryImages: ['/demo-products/speaker.svg', '/demo-products/headset.svg', '/demo-products/phone.svg']
+  },
+  108: {
+    mainImage: '/demo-products/scarf.svg',
+    galleryImages: ['/demo-products/scarf.svg', '/demo-products/backpack.svg', '/demo-products/running-shoes.svg']
+  }
+}
+
 export const showcaseStats = [
   { label: '精选 SKU', value: '120+' },
   { label: '平均发货', value: '18h' },
@@ -270,9 +308,9 @@ const seckillResults = new Map<string, SeckillCreateResponse>()
 const adminActivities: PromotionActivityAdmin[] = [
   {
     id: 7001,
-    name: 'NovaMall Flash Sale',
-    title: 'Live Flash Sale',
-    description: 'Seeded activity for local seckill acceptance.',
+    name: '星选商城限时秒杀',
+    title: '正在进行的秒杀',
+    description: '用于本地秒杀验收的初始化活动。',
     status: 1
   }
 ]
@@ -280,7 +318,7 @@ const adminSessions: PromotionSessionAdmin[] = [
   {
     id: 7101,
     activityId: 7001,
-    name: 'Live Drop',
+    name: '当前场次',
     startTime: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
     endTime: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
     status: 1,
@@ -289,7 +327,7 @@ const adminSessions: PromotionSessionAdmin[] = [
   {
     id: 7102,
     activityId: 7001,
-    name: 'Next Drop',
+    name: '下一场次',
     startTime: new Date(Date.now() + 3 * 60 * 60 * 1000).toISOString(),
     endTime: new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString(),
     status: 1,
@@ -303,15 +341,15 @@ const adminItems: PromotionSeckillSkuAdmin[] = [
     sessionId: 7101,
     skuId: 3001,
     productId: 2001,
-    productName: 'Mall Demo Phone',
-    skuCode: 'PHONE-BLACK-128G',
-    subtitle: 'Live drop limited stock for smoke tests.',
+    productName: '商城演示手机',
+    skuCode: '手机-黑色-128G',
+    subtitle: '当前场次限量库存，用于冒烟验收。',
     originalPrice: 1999,
     seckillPrice: 1599,
     totalStock: 120,
     availableStock: 36,
     limitPerUser: 1,
-    badge: 'Live',
+    badge: '进行中',
     sort: 1,
     status: 1
   },
@@ -321,15 +359,15 @@ const adminItems: PromotionSeckillSkuAdmin[] = [
     sessionId: 7101,
     skuId: 3002,
     productId: 2001,
-    productName: 'Mall Demo Phone',
-    skuCode: 'PHONE-WHITE-256G',
-    subtitle: 'Large storage model with flash-sale pricing.',
+    productName: '商城演示手机',
+    skuCode: '手机-白色-256G',
+    subtitle: '大容量版本，享秒杀优惠价。',
     originalPrice: 2399,
     seckillPrice: 1899,
     totalStock: 80,
     availableStock: 18,
     limitPerUser: 1,
-    badge: 'Limited',
+    badge: '限量',
     sort: 2,
     status: 1
   }
@@ -367,8 +405,21 @@ function summaries(): ProductListItem[] {
     categoryId,
     name,
     subtitle,
+    mainImage: productImages[id]?.mainImage,
     status
   }))
+}
+
+function withProductImages(product: ProductDetail): ProductDetail {
+  const images = productImages[product.id]
+  if (!images) {
+    return product
+  }
+  return {
+    ...product,
+    mainImage: images.mainImage,
+    galleryImages: JSON.stringify(images.galleryImages)
+  }
 }
 
 function findProductBySku(skuId: number) {
@@ -462,6 +513,52 @@ export function prototypeGetMe(): Promise<UserResponse> {
   return resolve(currentUser)
 }
 
+export function prototypeListMemberBenefits(): Promise<MemberBenefit[]> {
+  return resolve([
+    { code: 'COUPON', title: '会员专享券', description: '领取满减券并在下单时抵扣', sort: 1 },
+    { code: 'SECKILL_PRIORITY', title: '秒杀提醒', description: '关注秒杀场次，提前进入抢购链路', sort: 2 },
+    { code: 'SELF_OPERATED', title: '正品保障', description: '星选自营商品提供正品和售后保障', sort: 3 },
+    { code: 'FREE_SHIPPING', title: '基础包邮', description: '自营商品默认免基础运费', sort: 4 }
+  ])
+}
+
+export function prototypeListMemberCoupons(): Promise<MemberCoupon[]> {
+  const now = new Date()
+  const validTo = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+  return resolve([
+    {
+      id: 9101,
+      couponName: '新人满 199 减 20',
+      couponType: 'FULL_REDUCTION',
+      discountAmount: 20,
+      thresholdAmount: 199,
+      status: 1,
+      validFrom: now.toISOString(),
+      validTo
+    },
+    {
+      id: 9102,
+      couponName: '会员满 399 减 50',
+      couponType: 'FULL_REDUCTION',
+      discountAmount: 50,
+      thresholdAmount: 399,
+      status: 1,
+      validFrom: now.toISOString(),
+      validTo
+    },
+    {
+      id: 9103,
+      couponName: '秒杀免运券',
+      couponType: 'SHIPPING',
+      discountAmount: 8,
+      thresholdAmount: 0,
+      status: 1,
+      validFrom: now.toISOString(),
+      validTo
+    }
+  ])
+}
+
 export function prototypeListCategories(): Promise<CategoryResponse[]> {
   return resolve(categories)
 }
@@ -489,7 +586,7 @@ export function prototypePageProducts(params: PrototypeProductQuery): Promise<Pa
 
 export function prototypeGetProduct(id: number): Promise<ProductDetail> {
   const product = products.find((item) => item.id === id) || products[0]
-  return resolve(product)
+  return resolve(withProductImages(product))
 }
 
 export function prototypeAddCartItem(payload: { skuId: number; quantity: number }): Promise<CartItem> {
@@ -574,6 +671,33 @@ export function prototypeGetOrder(orderNo: string): Promise<OrderDetail> {
   return resolve(order)
 }
 
+export function prototypeListMyOrders(params: { pageNo?: number; pageSize?: number }): Promise<PageResult<OrderListItem>> {
+  const pageNo = params.pageNo || 1
+  const pageSize = params.pageSize || 10
+  const records = Array.from(orders.values())
+    .sort((a, b) => b.orderNo.localeCompare(a.orderNo))
+    .map((order) => ({
+      orderNo: order.orderNo,
+      totalAmount: order.totalAmount,
+      status: order.status,
+      payNo: order.payNo,
+      payTime: order.payTime,
+      cancelTime: order.cancelTime,
+      expireTime: order.expireTime,
+      remark: order.remark,
+      itemCount: order.items.reduce((sum, item) => sum + item.quantity, 0),
+      firstProductName: order.items[0]?.productName || null,
+      createdAt: new Date().toISOString()
+    }))
+  const start = (pageNo - 1) * pageSize
+  return resolve({
+    records: records.slice(start, start + pageSize),
+    total: records.length,
+    pageNo,
+    pageSize
+  })
+}
+
 export function prototypeListOrderStatusLogs(orderNo: string): Promise<OrderStatusLogResponse[]> {
   const order = orders.get(orderNo)
   if (!order) {
@@ -585,9 +709,9 @@ export function prototypeListOrderStatusLogs(orderNo: string): Promise<OrderStat
       userId: order.userId,
       fromStatus: null,
       toStatus: 10,
-      eventType: order.remark === '秒杀订单' ? 'SECKILL_CREATE' : 'CREATE',
+      eventType: order.remark === '秒杀订单' ? '秒杀建单' : '创建订单',
       bizNo: orderNo,
-      remark: order.remark || 'order created',
+      remark: order.remark || '订单已创建',
       createdAt: new Date(Date.now() - 5 * 60 * 1000).toISOString()
     }
   ]
@@ -597,9 +721,9 @@ export function prototypeListOrderStatusLogs(orderNo: string): Promise<OrderStat
       userId: order.userId,
       fromStatus: 10,
       toStatus: 20,
-      eventType: 'PAY_SUCCESS',
+      eventType: '支付成功',
       bizNo: order.payNo,
-      remark: 'payment success',
+      remark: '支付成功',
       createdAt: order.payTime || new Date().toISOString()
     })
   }
@@ -609,9 +733,9 @@ export function prototypeListOrderStatusLogs(orderNo: string): Promise<OrderStat
       userId: order.userId,
       fromStatus: 10,
       toStatus: 30,
-      eventType: 'USER_CANCEL',
+      eventType: '用户取消',
       bizNo: null,
-      remark: 'user canceled order',
+      remark: '用户取消订单',
       createdAt: order.cancelTime || new Date().toISOString()
     })
   }
@@ -714,8 +838,8 @@ export function prototypeSaveAdminActivity(payload: Partial<PromotionActivityAdm
   const id = payload.id || ++adminActivitySequence
   const next: PromotionActivityAdmin = {
     id,
-    name: payload.name || 'New Flash Sale',
-    title: payload.title || payload.name || 'New Flash Sale',
+    name: payload.name || '新建秒杀活动',
+    title: payload.title || payload.name || '新建秒杀活动',
     description: payload.description || null,
     status: payload.status ?? 1
   }
@@ -733,7 +857,7 @@ export function prototypeSaveAdminSession(payload: Partial<PromotionSessionAdmin
   const next: PromotionSessionAdmin = {
     id,
     activityId: payload.activityId || 7001,
-    name: payload.name || 'New Drop',
+    name: payload.name || '新建场次',
     startTime: payload.startTime || new Date(Date.now() + 60 * 60 * 1000).toISOString(),
     endTime: payload.endTime || new Date(Date.now() + 3 * 60 * 60 * 1000).toISOString(),
     status: payload.status ?? 1,
@@ -756,7 +880,7 @@ export function prototypeSaveAdminItem(payload: Partial<PromotionSeckillSkuAdmin
     sessionId: payload.sessionId || 7101,
     skuId: payload.skuId || 3001,
     productId: payload.productId || 2001,
-    productName: payload.productName || 'Mall Demo Phone',
+    productName: payload.productName || '商城演示手机',
     skuCode: payload.skuCode || `SKU-${payload.skuId || 3001}`,
     subtitle: payload.subtitle || null,
     originalPrice: payload.originalPrice || 1999,
@@ -791,16 +915,16 @@ export function prototypeListSeckillSessions(): Promise<SeckillSession[]> {
 export function prototypeListSeckillItems(sessionId: number): Promise<SeckillItem[]> {
   const items: Record<number, SeckillItem[]> = {
     7101: [
-      buildSeckillItem(7201, 7101, 3001, 'Aurora 降噪头戴耳机', '自适应降噪，早场限量开抢', 899, 699, 120, 0, '已抢光', 'ENDED'),
-      buildSeckillItem(7202, 7101, 3041, 'NestHub 香薰空气仪', '桌面香氛设备，限时直降', 329, 249, 80, 0, '售罄', 'ENDED')
+      buildSeckillItem(7201, 7101, 3001, '曜声降噪头戴耳机', '自适应降噪，早场限量开抢', 899, 699, 120, 0, '已抢光', 'ENDED'),
+      buildSeckillItem(7202, 7101, 3041, '巢境香薰空气仪', '桌面香氛设备，限时直降', 329, 249, 80, 0, '售罄', 'ENDED')
     ],
     7102: [
-      buildSeckillItem(7203, 7102, 3001, 'Aurora 降噪头戴耳机', '午场爆款，抢完即止', 899, 649, 150, 46, '正在抢', 'RUNNING'),
-      buildSeckillItem(7204, 7102, 3031, 'StrideX 缓震跑鞋', '城市慢跑鞋，限量秒杀', 639, 489, 90, 22, '运动热卖', 'RUNNING')
+      buildSeckillItem(7203, 7102, 3001, '曜声降噪头戴耳机', '午场爆款，抢完即止', 899, 649, 150, 46, '正在抢', 'RUNNING'),
+      buildSeckillItem(7204, 7102, 3031, '跃行缓震跑鞋', '城市慢跑鞋，限量秒杀', 639, 489, 90, 22, '运动热卖', 'RUNNING')
     ],
     7103: [
-      buildSeckillItem(7205, 7103, 3061, 'Pulse Mini 智能音箱', '晚场预告，小身材大声场', 299, 219, 100, 100, '即将开始', 'UPCOMING'),
-      buildSeckillItem(7206, 7103, 3051, 'UrbanPack 轻量通勤包', '通勤背包晚场补货', 459, 359, 70, 70, '预约提醒', 'UPCOMING')
+      buildSeckillItem(7205, 7103, 3061, '脉点迷你智能音箱', '晚场预告，小身材大声场', 299, 219, 100, 100, '即将开始', 'UPCOMING'),
+      buildSeckillItem(7206, 7103, 3051, '城行轻量通勤包', '通勤背包晚场补货', 459, 359, 70, 70, '预约提醒', 'UPCOMING')
     ]
   }
   return resolve(items[sessionId] || [])

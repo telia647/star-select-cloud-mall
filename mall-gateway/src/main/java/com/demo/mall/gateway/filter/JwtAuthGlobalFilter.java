@@ -75,7 +75,8 @@ public class JwtAuthGlobalFilter implements GlobalFilter, Ordered {
         List<String> exactPaths = List.of(
                 "/api/auth/login",
                 "/api/auth/refresh-token",
-                "/api/users/register"
+                "/api/users/register",
+                "/api/payments/callback/mock"
         );
         return exactPaths.contains(path)
                 || path.startsWith("/api/products")

@@ -38,8 +38,11 @@ export interface CategoryResponse {
 export interface ProductListItem {
   id: number
   categoryId: number
+  shopId?: number | null
+  shopName?: string | null
   name: string
   subtitle: string
+  mainImage?: string | null
   status: number
 }
 
@@ -55,8 +58,12 @@ export interface SkuResponse {
 export interface ProductDetail {
   id: number
   categoryId: number
+  shopId?: number | null
+  shopName?: string | null
   name: string
   subtitle: string
+  mainImage?: string | null
+  galleryImages?: string | null
   status: number
   skus: SkuResponse[]
 }
@@ -100,6 +107,38 @@ export interface OrderDetail {
   expireTime?: string | null
   remark: string | null
   items: OrderItem[]
+}
+
+export interface OrderListItem {
+  orderNo: string
+  totalAmount: number
+  status: number
+  payNo: string | null
+  payTime: string | null
+  cancelTime: string | null
+  expireTime?: string | null
+  remark: string | null
+  itemCount: number
+  firstProductName: string | null
+  createdAt?: string
+}
+
+export interface MemberBenefit {
+  code: string
+  title: string
+  description: string
+  sort: number
+}
+
+export interface MemberCoupon {
+  id: number
+  couponName: string
+  couponType: string
+  discountAmount: number
+  thresholdAmount: number
+  status: number
+  validFrom: string
+  validTo: string
 }
 
 export interface OrderStatusLogResponse {

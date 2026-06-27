@@ -36,16 +36,32 @@ Spring Cloud Alibaba microservice mall focused on high-concurrency flash-sale or
 ## Project Documentation
 
 - [Architecture](docs/architecture.md)
+- [Requirements Review](docs/requirements-review.md)
 - [Runbook](docs/runbook.md)
 - [Performance Testing](docs/performance-testing.md)
 - [Observability](docs/observability.md)
 - [Sentinel Gateway Flow Control](docs/sentinel.md)
 - [RBAC And Access Governance](docs/rbac-governance.md)
+- [Pre-Launch Risk Assessment](docs/pre-launch-risk-assessment.md)
 - [Production Risk Register](docs/risk-register.md)
 - [GitHub Release Guide](docs/github-release.md)
 - [Production Readiness Audit](docs/production-readiness-audit.md)
 - [Acceptance Report](docs/acceptance-report.md)
 - [Resume Project Summary](docs/resume-summary.md)
+
+## Screenshots
+
+| C-side mall | Product detail |
+| --- | --- |
+| ![Mall home product list](docs/assets/mall-home-products.png) | ![Product detail](docs/assets/product-detail.png) |
+
+| Flash sale channel | Admin seckill console |
+| --- | --- |
+| ![Flash sale channel](docs/assets/seckill-channel.png) | ![Admin seckill console](docs/assets/admin-seckill-console.png) |
+
+| Order detail |
+| --- |
+| ![Order detail](docs/assets/order-detail.png) |
 
 ## Middleware In A VM
 
@@ -73,9 +89,11 @@ $env:MALL_REDIS_PORT="6379"
 $env:MALL_ROCKETMQ_NAME_SERVER="${env:MALL_VM_HOST}:9876"
 $env:MALL_SENTINEL_DASHBOARD="${env:MALL_VM_HOST}:8858"
 $env:MALL_JWT_SECRET="replace-with-at-least-32-byte-secret"
+$env:MALL_PAYMENT_CALLBACK_SECRET="replace-with-payment-callback-secret"
+$env:MALL_SECURITY_FAIL_ON_DEFAULT_SECRET="false"
 ```
 
-`root / root`, empty Redis password, and the JWT placeholder are local acceptance values only. For a shared or deployed environment, use a dedicated MySQL account, enable middleware authentication as needed, and inject secrets through environment variables or a secret manager.
+`root / root`, empty Redis password, the JWT placeholder, and the payment callback placeholder are local acceptance values only. For a shared or deployed environment, use a dedicated MySQL account, enable middleware authentication as needed, inject secrets through environment variables or a secret manager, and set `MALL_SECURITY_FAIL_ON_DEFAULT_SECRET=true`.
 
 In IDEA, set these in each backend service run configuration. Do not omit `MALL_VM_HOST` or `MALL_MYSQL_HOST`; otherwise services can fall back to `localhost`.
 
@@ -108,7 +126,8 @@ Open these VM ports to the Windows host:
 
 - `3306` MySQL
 - `6379` Redis
-- `8848`, `9848`, `9849` Nacos
+- `8848`, `9848`, `9849` Nacos service ports
+- `8849` Nacos console
 - `9876`, `10909`, `10911` RocketMQ
 - `8088` RocketMQ Dashboard
 - `8858` Sentinel Dashboard
@@ -167,7 +186,8 @@ Open these VM ports to the Windows host:
 
 - `3306` MySQL
 - `6379` Redis
-- `8848`, `9848`, `9849` Nacos
+- `8848`, `9848`, `9849` Nacos service ports
+- `8849` Nacos console
 - `9876`, `10909`, `10911` RocketMQ
 - `8088` RocketMQ Dashboard
 - `8858` Sentinel Dashboard
@@ -309,6 +329,30 @@ For a small local multi-user seckill acceptance run without k6:
 powershell -ExecutionPolicy Bypass -File .\scripts\load-seckill.ps1 -Users 10 -Concurrency 3 -Stock 20
 ```
 
+Generate showcase data after the backend is running:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\seed-demo-data.ps1
+```
+
+Base demo data is inserted by Flyway when services start:
+
+- `mall-user`: demo users and addresses
+- `mall-product`: shops, categories, products, SKUs, and product image URLs
+- `mall-inventory`: stock for showcase SKUs
+- `mall-promotion`: seckill activities, sessions, and items
+
+Demo product images are stored under `mall-web/public/demo-products/`, and product APIs return paths such as `/demo-products/headset.svg`. In a real deployment, keep the same database fields and replace these paths with OSS/COS/S3/CDN URLs.
+
+`seed-demo-data.ps1` then calls real APIs to create paid orders, canceled orders, member coupons, and a seckill order. This keeps order, payment, inventory flow, and order status logs consistent.
+
+Before publishing or deploying, run the pre-launch checks:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\prelaunch-check.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\prelaunch-check.ps1 -RequireProductionSecrets
+```
+
 Register a user:
 
 ```powershell
@@ -412,4 +456,5 @@ curl http://localhost:8080/api/orders/seckill/<requestId> -H "Authorization: Bea
 - Actuator health: `http://localhost:<servicePort>/actuator/health`
 - Prometheus metrics: `http://localhost:<servicePort>/actuator/prometheus`
 - Springdoc UI for MVC services: `http://localhost:<servicePort>/swagger-ui.html`
+- Nacos Console: `http://<vm-ip>:8849`
 - RocketMQ Dashboard: `http://<vm-ip>:8088`

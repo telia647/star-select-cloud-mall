@@ -1,26 +1,30 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import {
   ArrowRight,
-  Heart,
+  BadgePercent,
+  ChevronRight,
+  Crown,
+  Gift,
   Search,
   ShieldCheck,
   ShoppingCart,
   SlidersHorizontal,
   Sparkles,
   Star,
-  Truck,
+  UserRound,
   Zap
 } from 'lucide-vue-next'
 import { listCategories, pageProducts } from '@/api/mall'
 import heroImage from '@/assets/mall-hero.png'
-import { getProductPresentation, servicePromises, showcaseStats } from '@/data/prototype'
+import { getProductPresentation, showcaseStats } from '@/data/prototype'
 import type { CategoryResponse, ProductListItem } from '@/types/api'
 import { money } from '@/utils/format'
 
 const router = useRouter()
+const route = useRoute()
 const loading = ref(false)
 const categories = ref<CategoryResponse[]>([])
 const products = ref<ProductListItem[]>([])
@@ -30,10 +34,15 @@ const query = reactive({
   pageNo: 1,
   pageSize: 8,
   categoryId: undefined as number | undefined,
-  keyword: ''
+  keyword: (route.query.keyword as string) || ''
 })
 
 const categoryTabs = computed(() => [{ id: undefined, name: '全部' }, ...categories.value])
+const channelCards = computed(() => [
+  { title: '限时秒杀', text: '整点开抢', action: '去抢购', path: '/seckill' },
+  { title: '品质数码', text: '通勤办公精选', action: '看数码', categoryId: categories.value[0]?.id },
+  { title: '居家焕新', text: '好物直降', action: '逛居家', categoryId: categories.value[1]?.id }
+])
 const displayProducts = computed(() => {
   const mapped = products.value.map((product, index) => ({
     product,
@@ -53,6 +62,17 @@ onMounted(() => {
   loadCategories()
   loadProducts()
 })
+
+watch(
+  () => route.query.keyword,
+  (keyword) => {
+    const nextKeyword = typeof keyword === 'string' ? keyword : ''
+    if (query.keyword !== nextKeyword) {
+      query.keyword = nextKeyword
+      search()
+    }
+  }
+)
 
 async function loadCategories() {
   categories.value = await listCategories()
@@ -84,6 +104,18 @@ function selectCategory(categoryId?: number) {
 function goDetail(id: number) {
   router.push(`/products/${id}`)
 }
+
+function productImage(product: ProductListItem) {
+  return product.mainImage || ''
+}
+
+function openChannel(card: { path?: string; categoryId?: number }) {
+  if (card.path) {
+    router.push(card.path)
+    return
+  }
+  selectCategory(card.categoryId)
+}
 </script>
 
 <template>
@@ -92,16 +124,16 @@ function goDetail(id: number) {
       <div class="mall-hero-copy">
         <el-tag class="hero-kicker" effect="plain">
           <Sparkles :size="14" />
-          今日严选
+          星选好物节
         </el-tag>
-        <h1>NovaMall 精选好物</h1>
-        <p>把数码、居家、美妆、运动和通勤单品放进一个清爽高效的购物体验里。</p>
+        <h1>今天值得买的品质好物</h1>
+        <p>秒杀、频道、商品流和购物车链路已经打通，适合展示真实 C 端商城的下单体验。</p>
         <div class="hero-actions">
           <el-button type="primary" size="large" @click="selectCategory(undefined)">
             <ShoppingCart :size="18" />
-            立即选购
+            逛全部商品
           </el-button>
-          <el-button size="large" @click="router.push('/seckill')">
+          <el-button class="hero-secondary" size="large" @click="router.push('/seckill')">
             <Zap :size="18" />
             限时秒杀
           </el-button>
@@ -117,27 +149,70 @@ function goDetail(id: number) {
       <div class="mall-hero-visual">
         <img :src="heroImage" alt="精选商品组合展示" />
         <div class="hero-floating-panel">
-          <span>本周热度</span>
-          <strong>98%</strong>
+          <span>今日会场</span>
+          <strong>爆品直降</strong>
         </div>
       </div>
     </section>
 
-    <section class="service-strip" aria-label="服务承诺">
-      <div v-for="(item, index) in servicePromises" :key="item.title" class="service-item">
-        <component :is="[ShieldCheck, Truck, Heart][index]" :size="19" />
-        <div>
-          <strong>{{ item.title }}</strong>
-          <span>{{ item.text }}</span>
-        </div>
+    <section class="commerce-board" aria-label="商城频道">
+      <aside class="category-rail">
+        <div class="rail-title">主题频道</div>
+        <button
+          v-for="item in categoryTabs"
+          :key="item.id ?? 'all-rail'"
+          type="button"
+          :class="{ active: query.categoryId === item.id }"
+          @click="selectCategory(item.id)"
+        >
+          <span>{{ item.name }}</span>
+          <ChevronRight :size="15" />
+        </button>
+      </aside>
+
+      <div class="promo-tiles">
+        <article v-for="card in channelCards" :key="card.title" class="promo-tile" @click="openChannel(card)">
+          <span>{{ card.text }}</span>
+          <strong>{{ card.title }}</strong>
+          <button type="button">
+            {{ card.action }}
+            <ArrowRight :size="15" />
+          </button>
+        </article>
       </div>
+
+      <aside class="member-card">
+        <div class="member-avatar">
+          <UserRound :size="26" />
+        </div>
+        <strong>星选会员权益</strong>
+        <span>品质保障、极速履约、秒杀提醒</span>
+        <div class="member-actions">
+          <button type="button" @click="router.push('/login')">登录领取</button>
+          <button type="button" @click="router.push('/me')">会员中心</button>
+        </div>
+        <div class="member-perks">
+          <div>
+            <Gift :size="17" />
+            <span>专享券</span>
+          </div>
+          <div>
+            <Crown :size="17" />
+            <span>优先购</span>
+          </div>
+          <div>
+            <ShieldCheck :size="17" />
+            <span>正品保障</span>
+          </div>
+        </div>
+      </aside>
     </section>
 
     <section class="catalog-section">
       <div class="catalog-heading">
         <div>
-          <span class="section-eyebrow">Catalog</span>
-          <h2>正在上新的商品</h2>
+          <span class="section-eyebrow">猜你喜欢</span>
+          <h2>为你推荐</h2>
         </div>
         <el-segmented
           v-model="sortMode"
@@ -147,19 +222,6 @@ function goDetail(id: number) {
             { label: '价格', value: 'price' }
           ]"
         />
-      </div>
-
-      <div class="category-tabs">
-        <button
-          v-for="item in categoryTabs"
-          :key="item.id ?? 'all'"
-          type="button"
-          class="category-pill"
-          :class="{ active: query.categoryId === item.id }"
-          @click="selectCategory(item.id)"
-        >
-          {{ item.name }}
-        </button>
       </div>
 
       <div class="catalog-toolbar">
@@ -185,14 +247,15 @@ function goDetail(id: number) {
           >
             <div class="product-media" :class="meta.tone">
               <span class="product-badge">{{ meta.accent }}</span>
-              <div class="product-object">
+              <img v-if="productImage(product)" class="product-image" :src="productImage(product)" :alt="product.name" />
+              <div v-else class="product-object">
                 <span>{{ meta.imageLabel }}</span>
               </div>
             </div>
 
             <div class="product-info">
               <div class="product-meta-line">
-                <span>{{ meta.scene }}</span>
+                <span>{{ product.shopName || meta.scene }}</span>
                 <span class="rating">
                   <Star :size="14" />
                   {{ meta.rating }}
@@ -201,12 +264,16 @@ function goDetail(id: number) {
               <h3>{{ product.name }}</h3>
               <p>{{ product.subtitle }}</p>
               <div class="product-tags">
+                <span class="coupon-tag">
+                  <BadgePercent :size="13" />
+                  满减
+                </span>
                 <span v-for="feature in meta.highlights.slice(0, 2)" :key="feature">{{ feature }}</span>
               </div>
               <div class="product-footer">
                 <div>
                   <strong>{{ money(meta.priceFrom) }}</strong>
-                  <span>{{ meta.delivery }}</span>
+                  <span>{{ meta.delivery }} · {{ meta.marketTag }}</span>
                 </div>
                 <el-tooltip content="查看详情" placement="top">
                   <el-button circle type="primary" @click.stop="goDetail(product.id)">

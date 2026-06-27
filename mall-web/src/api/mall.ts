@@ -4,8 +4,11 @@ import type {
   CategoryResponse,
   AdminIdResponse,
   LoginResponse,
+  MemberBenefit,
+  MemberCoupon,
   OrderCreateResponse,
   OrderDetail,
+  OrderListItem,
   OrderStatusLogResponse,
   PageResult,
   PaymentResponse,
@@ -34,6 +37,9 @@ import {
   prototypeCreateOrder,
   prototypeGetMe,
   prototypeGetOrder,
+  prototypeListMemberBenefits,
+  prototypeListMemberCoupons,
+  prototypeListMyOrders,
   prototypeListOrderStatusLogs,
   prototypeListStockFlows,
   prototypeGetPayment,
@@ -85,6 +91,20 @@ export function register(payload: { username: string; password: string; phone?: 
 
 export function getMe() {
   return requestWithOptionalMock(() => http.get<UserResponse, UserResponse>('/users/me'), () => prototypeGetMe())
+}
+
+export function listMemberBenefits() {
+  return requestWithOptionalMock(
+    () => http.get<MemberBenefit[], MemberBenefit[]>('/users/me/benefits'),
+    () => prototypeListMemberBenefits()
+  )
+}
+
+export function listMemberCoupons() {
+  return requestWithOptionalMock(
+    () => http.get<MemberCoupon[], MemberCoupon[]>('/users/me/coupons'),
+    () => prototypeListMemberCoupons()
+  )
 }
 
 export function listCategories() {
@@ -150,6 +170,13 @@ export function createOrder(payload: { items: Array<{ skuId: number; quantity: n
 export function getOrder(orderNo: string) {
   return requestWithOptionalMock(() => http.get<OrderDetail, OrderDetail>(`/orders/${orderNo}`), () =>
     prototypeGetOrder(orderNo)
+  )
+}
+
+export function listMyOrders(params: { pageNo?: number; pageSize?: number } = {}) {
+  return requestWithOptionalMock(
+    () => http.get<PageResult<OrderListItem>, PageResult<OrderListItem>>('/orders/me', { params }),
+    () => prototypeListMyOrders(params)
   )
 }
 

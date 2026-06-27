@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { CreditCard, PackageOpen, ShoppingBag, Trash2 } from 'lucide-vue-next'
+import { CreditCard, PackageOpen, ShieldCheck, ShoppingBag, Trash2 } from 'lucide-vue-next'
 import { getProductPresentation } from '@/data/prototype'
 import { useCartStore } from '@/stores/cart'
 import { money, parseSpec } from '@/utils/format'
@@ -63,11 +63,15 @@ async function checkout() {
 
 <template>
   <section class="shop-page">
-    <div class="page-header">
+    <div class="page-header commerce-page-header">
       <div>
-        <span class="section-eyebrow">Cart</span>
+        <span class="section-eyebrow">购物车</span>
         <h1>购物车</h1>
-        <p>确认商品、规格和数量后即可生成订单。</p>
+      </div>
+      <div class="checkout-steps" aria-label="交易步骤">
+        <span class="active">购物车</span>
+        <span>确认订单</span>
+        <span>准备支付</span>
       </div>
       <el-button :disabled="cartStore.items.length === 0" @click="clear">
         <Trash2 :size="17" />
@@ -88,6 +92,11 @@ async function checkout() {
 
       <div v-else class="cart-layout">
         <section class="cart-list" aria-label="购物车商品">
+          <div class="cart-shop-title">
+            <ShieldCheck :size="17" />
+            <strong>星选自营旗舰店</strong>
+            <span>正品保障 · 免运费</span>
+          </div>
           <article v-for="item in cartStore.items" :key="item.skuId" class="cart-item">
             <div class="cart-thumb product-media" :class="getProductPresentation({ id: item.productId, name: item.productName }).tone">
               <div class="product-object">

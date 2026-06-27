@@ -2,7 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Ban, CreditCard, RotateCcw } from 'lucide-vue-next'
+import { Ban, CreditCard, PackageCheck, RotateCcw } from 'lucide-vue-next'
 import { cancelOrder, getOrder, payOrder } from '@/api/mall'
 import type { OrderDetail } from '@/types/api'
 import { money, orderStatus, parseSpec } from '@/utils/format'
@@ -57,11 +57,11 @@ async function cancel() {
 
 <template>
   <section class="shop-page">
-    <div class="page-header">
+    <div class="page-header commerce-page-header">
       <div>
-        <span class="section-eyebrow">Order</span>
+        <span class="section-eyebrow">订单</span>
         <h1>订单详情</h1>
-        <p>{{ props.orderNo }}</p>
+        <p>订单号 {{ props.orderNo }}</p>
       </div>
       <el-button @click="load">
         <RotateCcw :size="17" />
@@ -71,7 +71,10 @@ async function cancel() {
 
     <el-skeleton :loading="loading" animated :rows="8">
       <div v-if="order" class="order-layout">
-        <section class="summary-band">
+        <section class="order-status-card">
+          <div class="order-status-icon">
+            <PackageCheck :size="30" />
+          </div>
           <div>
             <span>订单状态</span>
             <strong>{{ orderStatus(order.status) }}</strong>
@@ -86,21 +89,22 @@ async function cancel() {
           </div>
         </section>
 
-        <el-table :data="order.items" class="data-table">
-          <el-table-column label="商品" min-width="260">
-            <template #default="{ row }">
-              <div class="table-title">{{ row.productName }}</div>
-              <div class="muted">{{ row.skuCode }} · {{ parseSpec(row.specJson) }}</div>
-            </template>
-          </el-table-column>
-          <el-table-column label="单价" width="140">
-            <template #default="{ row }">{{ money(row.price) }}</template>
-          </el-table-column>
-          <el-table-column prop="quantity" label="数量" width="100" />
-          <el-table-column label="小计" width="150">
-            <template #default="{ row }">{{ money(row.totalAmount) }}</template>
-          </el-table-column>
-        </el-table>
+        <section class="order-goods-card">
+          <div class="cart-shop-title">
+            <PackageCheck :size="17" />
+            <strong>星选自营旗舰店</strong>
+            <span>订单商品</span>
+          </div>
+          <article v-for="item in order.items" :key="item.skuId" class="order-good-row">
+            <div>
+              <strong>{{ item.productName }}</strong>
+              <span>{{ item.skuCode }} · {{ parseSpec(item.specJson) }}</span>
+            </div>
+            <span>{{ money(item.price) }}</span>
+            <span>x{{ item.quantity }}</span>
+            <strong>{{ money(item.totalAmount) }}</strong>
+          </article>
+        </section>
 
         <div class="action-row">
           <el-button :disabled="order.status !== 10" :loading="canceling" @click="cancel">

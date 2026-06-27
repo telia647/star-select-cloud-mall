@@ -5,6 +5,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "mall.jwt")
 public class JwtProperties {
 
+    public static final String DEFAULT_DEVELOPMENT_SECRET = "mall-demo-jwt-secret-key-for-local-development";
+
     private String secret = "mall-demo-jwt-secret-key-for-hs256-please-change";
     private long accessTokenTtlSeconds = 7200;
     private long refreshTokenTtlSeconds = 604800;

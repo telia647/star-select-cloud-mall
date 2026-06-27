@@ -61,7 +61,7 @@ async function loadActivities() {
     }
     await loadOperationLogs()
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : 'Activity load failed')
+    ElMessage.error(error instanceof Error ? error.message : '活动加载失败')
   } finally {
     loading.value = false
   }
@@ -74,7 +74,7 @@ async function loadOperationLogs() {
 async function queryOrderStatusLogs() {
   const orderNo = orderLogQuery.value.trim()
   if (!orderNo) {
-    ElMessage.warning('Enter an order number')
+    ElMessage.warning('请输入订单号')
     return
   }
   orderLogLoading.value = true
@@ -83,7 +83,7 @@ async function queryOrderStatusLogs() {
     orderStatusLogs.value = statusLogs
     stockFlows.value = flows
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : 'Order diagnostics load failed')
+    ElMessage.error(error instanceof Error ? error.message : '订单诊断加载失败')
   } finally {
     orderLogLoading.value = false
   }
@@ -121,11 +121,11 @@ async function submitActivity() {
   try {
     const response = await saveAdminActivity(activityForm)
     activeActivityId.value = response.id
-    ElMessage.success('Activity saved')
+    ElMessage.success('活动已保存')
     await loadActivities()
     await loadOperationLogs()
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : 'Activity save failed')
+    ElMessage.error(error instanceof Error ? error.message : '活动保存失败')
   } finally {
     saving.value = false
   }
@@ -141,18 +141,18 @@ function newSession() {
 
 async function submitSession() {
   if (!activeActivityId.value) {
-    ElMessage.warning('Select an activity first')
+    ElMessage.warning('请先选择活动')
     return
   }
   saving.value = true
   try {
     const response = await saveAdminSession({ ...sessionForm, activityId: activeActivityId.value })
     activeSessionId.value = response.id
-    ElMessage.success('Session saved')
+    ElMessage.success('场次已保存')
     await loadSessions(activeActivityId.value)
     await loadOperationLogs()
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : 'Session save failed')
+    ElMessage.error(error instanceof Error ? error.message : '场次保存失败')
   } finally {
     saving.value = false
   }
@@ -168,17 +168,17 @@ function newItem() {
 
 async function submitItem() {
   if (!activeActivityId.value || !activeSessionId.value) {
-    ElMessage.warning('Select an activity and a session first')
+    ElMessage.warning('请先选择活动和场次')
     return
   }
   saving.value = true
   try {
     await saveAdminItem({ ...itemForm, activityId: activeActivityId.value, sessionId: activeSessionId.value })
-    ElMessage.success('Item saved')
+    ElMessage.success('商品已保存')
     await loadItems(activeSessionId.value)
     await loadOperationLogs()
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : 'Item save failed')
+    ElMessage.error(error instanceof Error ? error.message : '商品保存失败')
   } finally {
     saving.value = false
   }
@@ -193,9 +193,9 @@ async function preheatStock(row: PromotionSeckillSkuAdmin) {
       skuId: row.skuId,
       quantity: row.availableStock
     })
-    ElMessage.success('Redis stock preheated')
+    ElMessage.success('Redis 库存已预热')
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : 'Stock preheat failed')
+    ElMessage.error(error instanceof Error ? error.message : '库存预热失败')
   } finally {
     preheatingItemId.value = undefined
   }
@@ -227,15 +227,15 @@ function emptyItem(activityId = activeActivityId.value, sessionId = activeSessio
     sessionId,
     skuId: 3001,
     productId: 2001,
-    productName: 'Mall Demo Phone',
-    skuCode: 'PHONE-BLACK-128G',
-    subtitle: 'Operator configured flash-sale item.',
+    productName: '商城演示手机',
+    skuCode: '手机-黑色-128G',
+    subtitle: '运营配置的秒杀商品。',
     originalPrice: 1999,
     seckillPrice: 1599,
     totalStock: 100,
     availableStock: 100,
     limitPerUser: 1,
-    badge: 'Live',
+    badge: '进行中',
     sort: items.value.length + 1,
     status: 1
   }
@@ -247,20 +247,32 @@ function toLocalDateTimeInput(date: Date) {
 }
 
 function statusText(status?: number) {
-  return status === 1 ? 'Enabled' : 'Disabled'
+  return status === 1 ? '启用' : '停用'
 }
 
 function orderStatusText(status?: number | null) {
   if (status === 10) {
-    return 'Pending'
+    return '待支付'
   }
   if (status === 20) {
-    return 'Paid'
+    return '已支付'
   }
   if (status === 30) {
-    return 'Canceled'
+    return '已取消'
   }
   return '-'
+}
+
+function orderEventText(eventType?: string) {
+  const map: Record<string, string> = {
+    CREATE: '创建订单',
+    SECKILL_CREATE: '秒杀建单',
+    PAY_SUCCESS: '支付成功',
+    USER_CANCEL: '用户取消',
+    ORDER_EXPIRE: '订单超时',
+    CANCEL: '取消订单'
+  }
+  return eventType ? map[eventType] || eventType : '-'
 }
 
 function stockOperationType(operation?: string) {
@@ -274,6 +286,40 @@ function stockOperationType(operation?: string) {
     return 'info'
   }
   return ''
+}
+
+function stockOperationText(operation?: string) {
+  if (operation === 'LOCK') {
+    return '锁定'
+  }
+  if (operation === 'DEDUCT') {
+    return '扣减'
+  }
+  if (operation === 'RELEASE') {
+    return '释放'
+  }
+  return operation || '-'
+}
+
+function auditActionText(action?: string) {
+  const map: Record<string, string> = {
+    CREATE_ACTIVITY: '创建活动',
+    UPDATE_ACTIVITY: '更新活动',
+    CREATE_SESSION: '创建场次',
+    UPDATE_SESSION: '更新场次',
+    CREATE_SECKILL_SKU: '创建秒杀 SKU',
+    UPDATE_SECKILL_SKU: '更新秒杀 SKU'
+  }
+  return action ? map[action] || action : '-'
+}
+
+function resourceTypeText(resourceType?: string) {
+  const map: Record<string, string> = {
+    PROMO_ACTIVITY: '秒杀活动',
+    PROMO_SESSION: '秒杀场次',
+    PROMO_SECKILL_SKU: '秒杀商品'
+  }
+  return resourceType ? map[resourceType] || resourceType : '-'
 }
 
 function formatLogTime(value?: string) {
@@ -295,27 +341,27 @@ function formatLogTime(value?: string) {
       <div>
         <el-tag type="warning" effect="plain">
           <Settings :size="14" />
-          Seckill Operations
+          秒杀运营
         </el-tag>
-        <h1>Flash-sale control center</h1>
-        <p>Configure activities, time sessions, activity SKUs, limit rules, and Redis stock preheat from one console.</p>
+        <h1>秒杀运营控制台</h1>
+        <p>统一配置活动、场次、活动 SKU、限购规则和 Redis 库存预热。</p>
       </div>
       <div class="admin-metrics">
         <div>
           <strong>{{ activities.length }}</strong>
-          <span>Activities</span>
+          <span>活动数</span>
         </div>
         <div>
           <strong>{{ sessions.length }}</strong>
-          <span>Sessions</span>
+          <span>场次数</span>
         </div>
         <div>
           <strong>{{ enabledItemCount }}</strong>
-          <span>Active SKUs</span>
+          <span>启用 SKU</span>
         </div>
         <div>
           <strong>{{ totalAvailableStock }}</strong>
-          <span>Available</span>
+          <span>可售库存</span>
         </div>
       </div>
     </section>
@@ -324,12 +370,12 @@ function formatLogTime(value?: string) {
       <section class="admin-panel">
         <div class="admin-panel-head">
           <div>
-            <span class="section-eyebrow">Activity</span>
-            <h2>Campaigns</h2>
+            <span class="section-eyebrow">活动</span>
+            <h2>营销活动</h2>
           </div>
           <el-button @click="newActivity">
             <Wand2 :size="16" />
-            New
+            新建
           </el-button>
         </div>
 
@@ -342,39 +388,39 @@ function formatLogTime(value?: string) {
           @current-change="(row: PromotionActivityAdmin | undefined) => row && loadSessions(row.id)"
         >
           <el-table-column prop="id" label="ID" width="86" />
-          <el-table-column prop="name" label="Name" min-width="170" />
-          <el-table-column label="Status" width="96">
+          <el-table-column prop="name" label="名称" min-width="170" />
+          <el-table-column label="状态" width="96">
             <template #default="{ row }">
               <el-tag :type="row.status === 1 ? 'success' : 'info'" effect="plain">{{ statusText(row.status) }}</el-tag>
             </template>
           </el-table-column>
           <el-table-column width="84" align="right">
             <template #default="{ row }">
-              <el-button text @click.stop="editActivity(row)">Edit</el-button>
+              <el-button text @click.stop="editActivity(row)">编辑</el-button>
             </template>
           </el-table-column>
         </el-table>
 
         <el-form class="admin-form" label-position="top" @submit.prevent="submitActivity">
-          <el-form-item label="Name">
-            <el-input v-model="activityForm.name" placeholder="Activity name" />
+          <el-form-item label="名称">
+            <el-input v-model="activityForm.name" placeholder="活动名称" />
           </el-form-item>
-          <el-form-item label="Title">
-            <el-input v-model="activityForm.title" placeholder="Display title" />
+          <el-form-item label="标题">
+            <el-input v-model="activityForm.title" placeholder="展示标题" />
           </el-form-item>
-          <el-form-item label="Description">
-            <el-input v-model="activityForm.description" type="textarea" :rows="2" placeholder="Internal description" />
+          <el-form-item label="描述">
+            <el-input v-model="activityForm.description" type="textarea" :rows="2" placeholder="内部描述" />
           </el-form-item>
           <div class="admin-form-row">
-            <el-form-item label="Status">
+            <el-form-item label="状态">
               <el-select v-model="activityForm.status">
-                <el-option label="Enabled" :value="1" />
-                <el-option label="Disabled" :value="0" />
+                <el-option label="启用" :value="1" />
+                <el-option label="停用" :value="0" />
               </el-select>
             </el-form-item>
             <el-button type="primary" :loading="saving" native-type="submit">
               <Save :size="16" />
-              Save Activity
+              保存活动
             </el-button>
           </div>
         </el-form>
@@ -383,12 +429,12 @@ function formatLogTime(value?: string) {
       <section class="admin-panel">
         <div class="admin-panel-head">
           <div>
-            <span class="section-eyebrow">Session</span>
-            <h2>{{ activeActivity?.name || 'No activity selected' }}</h2>
+            <span class="section-eyebrow">场次</span>
+            <h2>{{ activeActivity?.name || '未选择活动' }}</h2>
           </div>
           <el-button :disabled="!activeActivityId" @click="newSession">
             <Timer :size="16" />
-            New
+            新建
           </el-button>
         </div>
 
@@ -399,47 +445,47 @@ function formatLogTime(value?: string) {
           highlight-current-row
           @current-change="(row: PromotionSessionAdmin | undefined) => row && loadItems(row.id)"
         >
-          <el-table-column prop="name" label="Name" min-width="130" />
-          <el-table-column prop="sort" label="Sort" width="72" />
-          <el-table-column label="Status" width="96">
+          <el-table-column prop="name" label="名称" min-width="130" />
+          <el-table-column prop="sort" label="排序" width="72" />
+          <el-table-column label="状态" width="96">
             <template #default="{ row }">
               <el-tag :type="row.status === 1 ? 'success' : 'info'" effect="plain">{{ statusText(row.status) }}</el-tag>
             </template>
           </el-table-column>
           <el-table-column width="84" align="right">
             <template #default="{ row }">
-              <el-button text @click.stop="editSession(row)">Edit</el-button>
+              <el-button text @click.stop="editSession(row)">编辑</el-button>
             </template>
           </el-table-column>
         </el-table>
 
         <el-form class="admin-form" label-position="top" @submit.prevent="submitSession">
           <div class="admin-form-row two">
-            <el-form-item label="Name">
-              <el-input v-model="sessionForm.name" placeholder="Session name" />
+            <el-form-item label="名称">
+              <el-input v-model="sessionForm.name" placeholder="场次名称" />
             </el-form-item>
-            <el-form-item label="Sort">
+            <el-form-item label="排序">
               <el-input-number v-model="sessionForm.sort" :min="0" />
             </el-form-item>
           </div>
           <div class="admin-form-row two">
-            <el-form-item label="Start">
+            <el-form-item label="开始时间">
               <el-date-picker v-model="sessionForm.startTime" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss" />
             </el-form-item>
-            <el-form-item label="End">
+            <el-form-item label="结束时间">
               <el-date-picker v-model="sessionForm.endTime" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss" />
             </el-form-item>
           </div>
           <div class="admin-form-row">
-            <el-form-item label="Status">
+            <el-form-item label="状态">
               <el-select v-model="sessionForm.status">
-                <el-option label="Enabled" :value="1" />
-                <el-option label="Disabled" :value="0" />
+                <el-option label="启用" :value="1" />
+                <el-option label="停用" :value="0" />
               </el-select>
             </el-form-item>
             <el-button type="primary" :loading="saving" native-type="submit">
               <Save :size="16" />
-              Save Session
+              保存场次
             </el-button>
           </div>
         </el-form>
@@ -449,26 +495,26 @@ function formatLogTime(value?: string) {
     <section class="admin-panel admin-wide-panel">
       <div class="admin-panel-head">
         <div>
-          <span class="section-eyebrow">Activity SKU</span>
-          <h2>{{ activeSession?.name || 'No session selected' }}</h2>
+          <span class="section-eyebrow">活动 SKU</span>
+          <h2>{{ activeSession?.name || '未选择场次' }}</h2>
         </div>
         <div class="admin-actions">
           <el-button :disabled="!activeSessionId" @click="newItem">
             <Flame :size="16" />
-            New SKU
+            新建 SKU
           </el-button>
           <el-button :disabled="!activeSessionId" @click="activeSessionId && loadItems(activeSessionId)">
             <RefreshCcw :size="16" />
-            Refresh
+            刷新
           </el-button>
         </div>
       </div>
 
       <el-table :data="items" class="admin-table" row-key="id">
         <el-table-column prop="skuId" label="SKU" width="92" />
-        <el-table-column prop="productName" label="Product" min-width="190" />
-        <el-table-column prop="skuCode" label="Code" min-width="150" />
-        <el-table-column label="Price" width="150">
+        <el-table-column prop="productName" label="商品" min-width="190" />
+        <el-table-column prop="skuCode" label="编码" min-width="150" />
+        <el-table-column label="价格" width="150">
           <template #default="{ row }">
             <div class="admin-price">
               <strong>{{ money(row.seckillPrice) }}</strong>
@@ -476,20 +522,20 @@ function formatLogTime(value?: string) {
             </div>
           </template>
         </el-table-column>
-        <el-table-column prop="availableStock" label="Available" width="104" />
-        <el-table-column prop="totalStock" label="Total" width="88" />
-        <el-table-column prop="limitPerUser" label="Limit" width="80" />
-        <el-table-column label="Status" width="96">
+        <el-table-column prop="availableStock" label="可售" width="104" />
+        <el-table-column prop="totalStock" label="总量" width="88" />
+        <el-table-column prop="limitPerUser" label="限购" width="80" />
+        <el-table-column label="状态" width="96">
           <template #default="{ row }">
             <el-tag :type="row.status === 1 ? 'success' : 'info'" effect="plain">{{ statusText(row.status) }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column width="172" align="right">
           <template #default="{ row }">
-            <el-button text @click="editItem(row)">Edit</el-button>
+            <el-button text @click="editItem(row)">编辑</el-button>
             <el-button text :loading="preheatingItemId === row.id" @click="preheatStock(row)">
               <DatabaseZap :size="15" />
-              Preheat
+              预热
             </el-button>
           </template>
         </el-table-column>
@@ -500,54 +546,54 @@ function formatLogTime(value?: string) {
           <el-form-item label="SKU ID">
             <el-input-number v-model="itemForm.skuId" :min="1" />
           </el-form-item>
-          <el-form-item label="Product ID">
+          <el-form-item label="商品 ID">
             <el-input-number v-model="itemForm.productId" :min="1" />
           </el-form-item>
-          <el-form-item label="SKU Code">
+          <el-form-item label="SKU 编码">
             <el-input v-model="itemForm.skuCode" />
           </el-form-item>
-          <el-form-item label="Badge">
+          <el-form-item label="角标">
             <el-input v-model="itemForm.badge" />
           </el-form-item>
         </div>
         <div class="admin-form-row two">
-          <el-form-item label="Product Name">
+          <el-form-item label="商品名称">
             <el-input v-model="itemForm.productName" />
           </el-form-item>
-          <el-form-item label="Subtitle">
+          <el-form-item label="副标题">
             <el-input v-model="itemForm.subtitle" />
           </el-form-item>
         </div>
         <div class="admin-form-row four">
-          <el-form-item label="Original Price">
+          <el-form-item label="原价">
             <el-input-number v-model="itemForm.originalPrice" :min="0.01" :precision="2" />
           </el-form-item>
-          <el-form-item label="Seckill Price">
+          <el-form-item label="秒杀价">
             <el-input-number v-model="itemForm.seckillPrice" :min="0.01" :precision="2" />
           </el-form-item>
-          <el-form-item label="Total Stock">
+          <el-form-item label="总库存">
             <el-input-number v-model="itemForm.totalStock" :min="0" />
           </el-form-item>
-          <el-form-item label="Available Stock">
+          <el-form-item label="可售库存">
             <el-input-number v-model="itemForm.availableStock" :min="0" />
           </el-form-item>
         </div>
         <div class="admin-form-row four">
-          <el-form-item label="Limit Per User">
+          <el-form-item label="单人限购">
             <el-input-number v-model="itemForm.limitPerUser" :min="1" />
           </el-form-item>
-          <el-form-item label="Sort">
+          <el-form-item label="排序">
             <el-input-number v-model="itemForm.sort" :min="0" />
           </el-form-item>
-          <el-form-item label="Status">
+          <el-form-item label="状态">
             <el-select v-model="itemForm.status">
-              <el-option label="Enabled" :value="1" />
-              <el-option label="Disabled" :value="0" />
+              <el-option label="启用" :value="1" />
+              <el-option label="停用" :value="0" />
             </el-select>
           </el-form-item>
           <el-button type="primary" :loading="saving" native-type="submit">
             <Save :size="16" />
-            Save SKU
+            保存 SKU
           </el-button>
         </div>
       </el-form>
@@ -556,74 +602,76 @@ function formatLogTime(value?: string) {
     <section class="admin-panel admin-wide-panel">
       <div class="admin-panel-head">
         <div>
-          <span class="section-eyebrow">Diagnostics</span>
-          <h2>Order status timeline</h2>
+          <span class="section-eyebrow">诊断</span>
+          <h2>订单状态时间线</h2>
         </div>
         <div class="admin-query-actions">
           <el-input
             v-model="orderLogQuery"
             clearable
-            placeholder="Order number"
+            placeholder="订单号"
             @keyup.enter="queryOrderStatusLogs"
           />
           <el-button type="primary" :loading="orderLogLoading" @click="queryOrderStatusLogs">
             <Search :size="16" />
-            Query
+            查询
           </el-button>
         </div>
       </div>
 
-      <el-table :data="orderStatusLogs" class="admin-table" empty-text="No order status logs">
-        <el-table-column label="Time" width="150">
+      <el-table :data="orderStatusLogs" class="admin-table" empty-text="暂无订单状态日志">
+        <el-table-column label="时间" width="150">
           <template #default="{ row }">
             {{ formatLogTime(row.createdAt) }}
           </template>
         </el-table-column>
-        <el-table-column prop="eventType" label="Event" min-width="150" />
-        <el-table-column label="Status" width="190">
+        <el-table-column label="事件" min-width="150">
+          <template #default="{ row }">{{ orderEventText(row.eventType) }}</template>
+        </el-table-column>
+        <el-table-column label="状态" width="190">
           <template #default="{ row }">
             <div class="admin-status-flow">
               <el-tag effect="plain">{{ orderStatusText(row.fromStatus) }}</el-tag>
-              <span>to</span>
+              <span>至</span>
               <el-tag :type="row.toStatus === 20 ? 'success' : row.toStatus === 30 ? 'info' : 'warning'" effect="plain">
                 {{ orderStatusText(row.toStatus) }}
               </el-tag>
             </div>
           </template>
         </el-table-column>
-        <el-table-column prop="bizNo" label="Biz No." min-width="150">
+        <el-table-column prop="bizNo" label="业务单号" min-width="150">
           <template #default="{ row }">
             <span class="admin-log-detail">{{ row.bizNo || '-' }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="remark" label="Remark" min-width="260">
+        <el-table-column prop="remark" label="备注" min-width="260">
           <template #default="{ row }">
             <span class="admin-log-detail">{{ row.remark || '-' }}</span>
           </template>
         </el-table-column>
       </el-table>
 
-      <el-table :data="stockFlows" class="admin-table" empty-text="No stock flows">
-        <el-table-column label="Time" width="150">
+      <el-table :data="stockFlows" class="admin-table" empty-text="暂无库存流水">
+        <el-table-column label="时间" width="150">
           <template #default="{ row }">
             {{ formatLogTime(row.createdAt) }}
           </template>
         </el-table-column>
         <el-table-column prop="skuId" label="SKU" width="100" />
-        <el-table-column label="Operation" width="120">
+        <el-table-column label="操作" width="120">
           <template #default="{ row }">
-            <el-tag :type="stockOperationType(row.operation)" effect="plain">{{ row.operation }}</el-tag>
+            <el-tag :type="stockOperationType(row.operation)" effect="plain">{{ stockOperationText(row.operation) }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="quantity" label="Qty" width="80" />
-        <el-table-column label="Available" min-width="160">
+        <el-table-column prop="quantity" label="数量" width="80" />
+        <el-table-column label="可售库存" min-width="160">
           <template #default="{ row }">
-            <span class="admin-log-detail">{{ row.beforeAvailableStock }} to {{ row.afterAvailableStock }}</span>
+            <span class="admin-log-detail">{{ row.beforeAvailableStock }} 至 {{ row.afterAvailableStock }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="Locked" min-width="160">
+        <el-table-column label="锁定库存" min-width="160">
           <template #default="{ row }">
-            <span class="admin-log-detail">{{ row.beforeLockedStock }} to {{ row.afterLockedStock }}</span>
+            <span class="admin-log-detail">{{ row.beforeLockedStock }} 至 {{ row.afterLockedStock }}</span>
           </template>
         </el-table-column>
       </el-table>
@@ -632,26 +680,30 @@ function formatLogTime(value?: string) {
     <section class="admin-panel admin-wide-panel">
       <div class="admin-panel-head">
         <div>
-          <span class="section-eyebrow">Audit</span>
-          <h2>Recent operations</h2>
+          <span class="section-eyebrow">审计</span>
+          <h2>最近操作</h2>
         </div>
         <el-button @click="loadOperationLogs">
           <RefreshCcw :size="16" />
-          Refresh
+          刷新
         </el-button>
       </div>
 
-      <el-table :data="operationLogs" class="admin-table" empty-text="No operation logs">
-        <el-table-column label="Time" width="120">
+      <el-table :data="operationLogs" class="admin-table" empty-text="暂无操作日志">
+        <el-table-column label="时间" width="120">
           <template #default="{ row }">
             {{ formatLogTime(row.createdAt) }}
           </template>
         </el-table-column>
-        <el-table-column prop="operatorName" label="Operator" width="120" />
-        <el-table-column prop="action" label="Action" min-width="170" />
-        <el-table-column prop="resourceType" label="Resource" width="160" />
+        <el-table-column prop="operatorName" label="操作人" width="120" />
+        <el-table-column label="动作" min-width="170">
+          <template #default="{ row }">{{ auditActionText(row.action) }}</template>
+        </el-table-column>
+        <el-table-column label="资源" width="160">
+          <template #default="{ row }">{{ resourceTypeText(row.resourceType) }}</template>
+        </el-table-column>
         <el-table-column prop="resourceId" label="ID" width="100" />
-        <el-table-column prop="detail" label="Detail" min-width="280">
+        <el-table-column prop="detail" label="详情" min-width="280">
           <template #default="{ row }">
             <span class="admin-log-detail">{{ row.detail || '-' }}</span>
           </template>

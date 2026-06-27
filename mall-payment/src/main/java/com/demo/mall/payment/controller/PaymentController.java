@@ -2,6 +2,7 @@ package com.demo.mall.payment.controller;
 
 import com.demo.mall.common.api.Result;
 import com.demo.mall.common.security.header.SecurityHeaders;
+import com.demo.mall.payment.dto.PaymentCallbackRequest;
 import com.demo.mall.payment.dto.PaymentRequest;
 import com.demo.mall.payment.dto.PaymentResponse;
 import com.demo.mall.payment.service.PaymentService;
@@ -28,6 +29,11 @@ public class PaymentController {
     public Result<PaymentResponse> pay(@RequestHeader(SecurityHeaders.USER_ID) Long userId,
                                        @Valid @RequestBody PaymentRequest request) {
         return Result.success(paymentService.pay(userId, request));
+    }
+
+    @PostMapping("/callback/mock")
+    public Result<PaymentResponse> mockCallback(@Valid @RequestBody PaymentCallbackRequest request) {
+        return Result.success(paymentService.callback(request));
     }
 
     @GetMapping("/{payNo}")

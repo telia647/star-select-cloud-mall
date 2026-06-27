@@ -8,11 +8,13 @@ import com.alibaba.csp.sentinel.adapter.gateway.common.rule.GatewayFlowRule;
 import com.alibaba.csp.sentinel.adapter.gateway.common.rule.GatewayRuleManager;
 import com.alibaba.csp.sentinel.slots.block.RuleConstant;
 import jakarta.annotation.PostConstruct;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.Set;
 
 @Configuration
+@EnableConfigurationProperties(GatewayFlowControlProperties.class)
 public class GatewaySentinelConfiguration {
 
     private static final String API_AUTH_LOGIN = "api_auth_login";
@@ -20,6 +22,12 @@ public class GatewaySentinelConfiguration {
     private static final String API_SECKILL_CATALOG = "api_seckill_catalog";
     private static final String API_SECKILL_TOKEN = "api_seckill_token";
     private static final String API_SECKILL_SUBMIT = "api_seckill_submit";
+
+    private final GatewayFlowControlProperties flowProperties;
+
+    public GatewaySentinelConfiguration(GatewayFlowControlProperties flowProperties) {
+        this.flowProperties = flowProperties;
+    }
 
     @PostConstruct
     public void initGatewayRules() {
@@ -32,13 +40,13 @@ public class GatewaySentinelConfiguration {
         ));
 
         GatewayRuleManager.loadRules(Set.of(
-                customApiRule(API_AUTH_LOGIN, 80, 20),
-                customApiRule(API_PRODUCT_READ, 600, 100),
-                customApiRule(API_SECKILL_CATALOG, 500, 100),
-                customApiRule(API_SECKILL_TOKEN, 200, 50),
-                customApiRule(API_SECKILL_SUBMIT, 120, 30),
-                routeRule("mall-order", 700, 100),
-                routeRule("mall-promotion", 700, 100)
+                customApiRule(API_AUTH_LOGIN, flowProperties.getAuthLogin()),
+                customApiRule(API_PRODUCT_READ, flowProperties.getProductRead()),
+                customApiRule(API_SECKILL_CATALOG, flowProperties.getSeckillCatalog()),
+                customApiRule(API_SECKILL_TOKEN, flowProperties.getSeckillToken()),
+                customApiRule(API_SECKILL_SUBMIT, flowProperties.getSeckillSubmit()),
+                routeRule("mall-order", flowProperties.getOrderRoute()),
+                routeRule("mall-promotion", flowProperties.getPromotionRoute())
         ));
     }
 
@@ -62,9 +70,17 @@ public class GatewaySentinelConfiguration {
                 .setResourceMode(SentinelGatewayConstants.RESOURCE_MODE_CUSTOM_API_NAME);
     }
 
+    private GatewayFlowRule customApiRule(String apiName, GatewayFlowControlProperties.Rule rule) {
+        return customApiRule(apiName, rule.qps(), rule.burst());
+    }
+
     private GatewayFlowRule routeRule(String routeId, double qps, int burst) {
         return baseRule(routeId, qps, burst)
                 .setResourceMode(SentinelGatewayConstants.RESOURCE_MODE_ROUTE_ID);
+    }
+
+    private GatewayFlowRule routeRule(String routeId, GatewayFlowControlProperties.Rule rule) {
+        return routeRule(routeId, rule.qps(), rule.burst());
     }
 
     private GatewayFlowRule baseRule(String resource, double qps, int burst) {

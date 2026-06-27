@@ -64,7 +64,7 @@ async function submit() {
 
       <div class="auth-visual" :style="{ backgroundImage: `linear-gradient(180deg, rgba(14, 24, 34, 0.2), rgba(14, 24, 34, 0.72)), url(${heroImage})` }">
         <div>
-          <span>Member</span>
+          <span>会员服务</span>
           <strong>从选购到售后统一管理</strong>
         </div>
       </div>

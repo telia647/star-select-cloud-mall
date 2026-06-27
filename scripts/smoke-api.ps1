@@ -79,6 +79,32 @@ function Login {
     return $data.accessToken
 }
 
+function Verify-SeckillOrder {
+    param(
+        [Parameter(Mandatory = $true)][string]$OrderNo,
+        [Parameter(Mandatory = $true)][string]$MemberToken,
+        [Parameter(Mandatory = $true)][string]$AdminToken
+    )
+
+    Invoke-Api -Method "GET" -Path "/orders/$OrderNo" -Token $MemberToken | Out-Null
+    Write-Host "[OK]   seckill order detail"
+
+    $payment = Invoke-Api -Method "POST" -Path "/payments/pay" -Token $MemberToken -Body @{
+        orderNo = $OrderNo
+        payChannel = "MOCK"
+    }
+    Write-Host "[OK]   seckill order paid: $($payment.payNo)"
+
+    Invoke-Api -Method "GET" -Path "/payments/$($payment.payNo)" -Token $MemberToken | Out-Null
+    Write-Host "[OK]   payment detail"
+
+    Invoke-Api -Method "GET" -Path "/orders/admin/$OrderNo/status-logs" -Token $AdminToken | Out-Null
+    Write-Host "[OK]   order status logs"
+
+    Invoke-Api -Method "GET" -Path "/inventory/admin/stock-flows?orderNo=$OrderNo" -Token $AdminToken | Out-Null
+    Write-Host "[OK]   inventory stock flows"
+}
+
 Write-Host "Running smoke checks against $BaseUrl"
 
 try {
@@ -109,6 +135,18 @@ Write-Host "[OK]   seckill session items"
 
 Invoke-Api -Method "GET" -Path "/promotions/admin/seckill/activities" -Token $adminToken | Out-Null
 Write-Host "[OK]   admin activities"
+
+Invoke-Api -Method "GET" -Path "/users/me" -Token $memberToken | Out-Null
+Write-Host "[OK]   current user"
+
+Invoke-Api -Method "GET" -Path "/users/me/benefits" -Token $memberToken | Out-Null
+Write-Host "[OK]   member benefits"
+
+Invoke-Api -Method "GET" -Path "/users/me/coupons" -Token $memberToken | Out-Null
+Write-Host "[OK]   member coupons"
+
+Invoke-Api -Method "GET" -Path "/orders/me" -Token $memberToken | Out-Null
+Write-Host "[OK]   my orders"
 
 if (-not $RunSeckill) {
     Write-Host "Smoke checks passed. Add -RunSeckill to create a real seckill order."
@@ -146,6 +184,9 @@ Write-Host "[OK]   seckill submitted: $($submit.status)"
 
 if ($submit.status -eq "CREATED" -or $submit.status -eq "FAILED") {
     Write-Host "[OK]   seckill final result: $($submit.status)"
+    if ($submit.orderNo) {
+        Verify-SeckillOrder -OrderNo $submit.orderNo -MemberToken $memberToken -AdminToken $adminToken
+    }
     exit 0
 }
 
@@ -155,6 +196,11 @@ for ($i = 0; $i -lt 10; $i++) {
     Write-Host "[OK]   seckill result poll $($i + 1): $($result.status)"
     if ($result.status -eq "CREATED" -or $result.status -eq "FAILED") {
         Write-Host "[OK]   seckill final result: $($result.status)"
+        if ($result.orderNo) {
+            Verify-SeckillOrder -OrderNo $result.orderNo -MemberToken $memberToken -AdminToken $adminToken
+            Invoke-Api -Method "GET" -Path "/orders/me" -Token $memberToken | Out-Null
+            Write-Host "[OK]   my orders after seckill"
+        }
         exit 0
         break
     }

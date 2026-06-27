@@ -12,8 +12,10 @@ import com.demo.mall.product.dto.ProductQueryRequest;
 import com.demo.mall.product.dto.ProductSkuResponse;
 import com.demo.mall.product.dto.SkuResponse;
 import com.demo.mall.product.entity.Product;
+import com.demo.mall.product.entity.Shop;
 import com.demo.mall.product.entity.Sku;
 import com.demo.mall.product.mapper.ProductMapper;
+import com.demo.mall.product.mapper.ShopMapper;
 import com.demo.mall.product.mapper.SkuMapper;
 import org.springframework.stereotype.Service;
 
@@ -27,13 +29,16 @@ public class ProductService {
 
     private final ProductMapper productMapper;
     private final SkuMapper skuMapper;
+    private final ShopMapper shopMapper;
     private final ProductCacheService productCacheService;
 
     public ProductService(ProductMapper productMapper,
                           SkuMapper skuMapper,
+                          ShopMapper shopMapper,
                           ProductCacheService productCacheService) {
         this.productMapper = productMapper;
         this.skuMapper = skuMapper;
+        this.shopMapper = shopMapper;
         this.productCacheService = productCacheService;
     }
 
@@ -159,8 +164,12 @@ public class ProductService {
         return new ProductDetailResponse(
                 product.getId(),
                 product.getCategoryId(),
+                product.getShopId(),
+                shopName(product.getShopId()),
                 product.getName(),
                 product.getSubtitle(),
+                product.getMainImage(),
+                product.getGalleryImages(),
                 product.getStatus(),
                 skus
         );
@@ -198,10 +207,21 @@ public class ProductService {
         return new ProductListItemResponse(
                 product.getId(),
                 product.getCategoryId(),
+                product.getShopId(),
+                shopName(product.getShopId()),
                 product.getName(),
                 product.getSubtitle(),
+                product.getMainImage(),
                 product.getStatus()
         );
+    }
+
+    private String shopName(Long shopId) {
+        if (shopId == null) {
+            return null;
+        }
+        Shop shop = shopMapper.selectById(shopId);
+        return shop == null ? null : shop.getName();
     }
 
     private SkuResponse toSkuResponse(Sku sku) {

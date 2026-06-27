@@ -21,7 +21,7 @@ $databases = @(
 
 if ([string]::IsNullOrWhiteSpace($MysqlHost)) {
     # VM addresses differ per developer. Prefer MALL_VM_HOST; this fallback is only a local example.
-    $MysqlHost = if ([string]::IsNullOrWhiteSpace($env:MALL_VM_HOST)) { "192.168.150.105" } else { $env:MALL_VM_HOST }
+    $MysqlHost = if ([string]::IsNullOrWhiteSpace($env:MALL_VM_HOST)) { "192.168.56.101" } else { $env:MALL_VM_HOST }
 }
 if ([string]::IsNullOrWhiteSpace($MysqlPort)) {
     $MysqlPort = "3306"

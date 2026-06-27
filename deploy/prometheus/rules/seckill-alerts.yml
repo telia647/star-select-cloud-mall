@@ -27,3 +27,30 @@ groups:
         annotations:
           summary: "Seckill submit p95 latency is slow"
           description: "The p95 latency of /orders/seckill has been above 1.5s for 5 minutes."
+
+      - alert: MallSeckillSubmitErrorRateHigh
+        expr: sum(rate(http_server_requests_seconds_count{uri="/orders/seckill",status=~"5.."}[5m])) / clamp_min(sum(rate(http_server_requests_seconds_count{uri="/orders/seckill"}[5m])), 1) > 0.05
+        for: 3m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Seckill submit 5xx error ratio is high"
+          description: "More than 5% of /orders/seckill requests returned 5xx during the last 5 minutes."
+
+      - alert: MallOrderServiceUnavailable
+        expr: up{job="mall-order"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "mall-order is unavailable"
+          description: "Prometheus cannot scrape mall-order. Seckill ordering and payment state updates may be unavailable."
+
+      - alert: MallPromotionServiceUnavailable
+        expr: up{job="mall-promotion"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "mall-promotion is unavailable"
+          description: "Prometheus cannot scrape mall-promotion. Seckill catalog and validation may be unavailable."

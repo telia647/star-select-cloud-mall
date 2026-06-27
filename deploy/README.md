@@ -6,11 +6,11 @@ This directory is the VM-side middleware package. Copy `deploy/` to the Linux VM
 
 - MySQL `3306`
 - Redis `6379`
-- Nacos `8848`, `9848`, `9849`
+- Nacos service ports `8848`, `9848`, `9849`; Nacos 3.x console `8849`
 - RocketMQ NameServer `9876`
 - RocketMQ Broker `10909`, `10911`
 - RocketMQ topic initializer for `order-paid-topic`, `seckill-order-topic`, and `inventory-deducted-topic`
-- RocketMQ Dashboard `8088`
+- RocketMQ Dashboard `8088` on the VM, mapped to the dashboard container's embedded Tomcat port `8082`
 - Sentinel Dashboard `8858`
 - Optional Prometheus `9090` and Grafana `3000`
 
@@ -46,6 +46,41 @@ Optional observability:
 
 ```bash
 docker compose --profile observability up -d
+```
+
+If RocketMQ Dashboard is up but `http://<vm-ip>:8088` resets the connection, check the port mapping:
+
+```bash
+grep -n "8088" docker-compose.yml
+docker port mall-rocketmq-dashboard
+```
+
+The current dashboard image starts Tomcat on container port `8082`, so the mapping should be:
+
+```yaml
+ports:
+  - "8088:8082"
+```
+
+After changing the VM copy of `docker-compose.yml`, recreate only the dashboard:
+
+```bash
+docker compose up -d --force-recreate rocketmq-dashboard
+curl -v http://127.0.0.1:8088/
+```
+
+For Nacos 3.x, the service endpoint remains `8848`, but the web console is exposed separately on host port `8849`:
+
+```bash
+grep -n "8849" docker-compose.yml
+docker compose up -d --force-recreate nacos
+curl -v http://127.0.0.1:8849/
+```
+
+Open the console at:
+
+```text
+http://<vm-ip>:8849
 ```
 
 ## Windows/IDEA Environment

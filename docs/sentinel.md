@@ -27,7 +27,19 @@ Protected resources:
 | `mall-order` route | Gateway route id | 700 | 100 |
 | `mall-promotion` route | Gateway route id | 700 | 100 |
 
-These static rules are deliberately conservative for local acceptance. Production deployments should move them to dynamic configuration and tune them from real traffic and capacity test data.
+These defaults are deliberately conservative for local acceptance. They can be tuned without code changes through `mall.gateway.flow.*` properties or the matching environment variables:
+
+| Variable | Default |
+| --- | ---: |
+| `MALL_FLOW_AUTH_LOGIN_QPS` / `MALL_FLOW_AUTH_LOGIN_BURST` | `80` / `20` |
+| `MALL_FLOW_PRODUCT_READ_QPS` / `MALL_FLOW_PRODUCT_READ_BURST` | `600` / `100` |
+| `MALL_FLOW_SECKILL_CATALOG_QPS` / `MALL_FLOW_SECKILL_CATALOG_BURST` | `500` / `100` |
+| `MALL_FLOW_SECKILL_TOKEN_QPS` / `MALL_FLOW_SECKILL_TOKEN_BURST` | `200` / `50` |
+| `MALL_FLOW_SECKILL_SUBMIT_QPS` / `MALL_FLOW_SECKILL_SUBMIT_BURST` | `120` / `30` |
+| `MALL_FLOW_ORDER_ROUTE_QPS` / `MALL_FLOW_ORDER_ROUTE_BURST` | `700` / `100` |
+| `MALL_FLOW_PROMOTION_ROUTE_QPS` / `MALL_FLOW_PROMOTION_ROUTE_BURST` | `700` / `100` |
+
+Production deployments should still move rules to a dynamic rule source such as Nacos when runtime tuning without restart is required.
 
 ## Start Dashboard
 

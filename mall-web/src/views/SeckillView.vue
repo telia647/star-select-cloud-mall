@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Bell, Clock3, Flame, Hourglass, PackageCheck, RotateCcw, ShoppingBag, Zap } from 'lucide-vue-next'
+import { Bell, Clock3, Flame, Hourglass, PackageCheck, RotateCcw, Zap } from 'lucide-vue-next'
 import { getSeckillResult, issueSeckillToken, listSeckillItems, listSeckillSessions, submitSeckill } from '@/api/mall'
 import { useAuthStore } from '@/stores/auth'
 import type { SeckillCreateResponse, SeckillItem, SeckillSession } from '@/types/api'
@@ -139,6 +139,35 @@ function buttonLabel(item: SeckillItem) {
   return '立即抢购'
 }
 
+function resultMessageText(message: string) {
+  const map: Record<string, string> = {
+    'seckill request accepted': '请求已接收，订单正在创建中。',
+    'seckill order created': '秒杀成功，订单已创建。',
+    'seckill order create failed': '秒杀订单创建失败。'
+  }
+  return map[message] || message
+}
+
+function seckillImage(item: SeckillItem) {
+  const text = `${item.productName} ${item.skuCode}`.toLowerCase()
+  if (text.includes('headset') || text.includes('ear') || item.skuId === 3001 || item.skuId === 3010) {
+    return '/demo-products/headset.svg'
+  }
+  if (text.includes('runner') || item.skuId === 3031 || item.skuId === 3016) {
+    return '/demo-products/running-shoes.svg'
+  }
+  if (text.includes('aroma') || item.skuId === 3041 || item.skuId === 3018) {
+    return '/demo-products/aroma.svg'
+  }
+  if (text.includes('bag') || item.skuId === 3051 || item.skuId === 3020) {
+    return '/demo-products/backpack.svg'
+  }
+  if (text.includes('speaker') || item.skuId === 3061 || item.skuId === 3022) {
+    return '/demo-products/speaker.svg'
+  }
+  return '/demo-products/phone.svg'
+}
+
 function formatTime(value: string) {
   return new Date(value).toLocaleTimeString('zh-CN', {
     hour: '2-digit',
@@ -153,9 +182,9 @@ function formatTime(value: string) {
       <div>
         <el-tag type="danger" effect="dark">
           <Zap :size="14" />
-          Flash Sale
+          整点开抢
         </el-tag>
-        <h1>限时秒杀</h1>
+        <h1>星选秒杀会场</h1>
         <p>按场次开抢，Redis 预扣库存、MQ 异步建单、订单支付倒计时，面向高并发 C 端抢购链路。</p>
         <div class="seckill-hero-stats">
           <div>
@@ -172,7 +201,11 @@ function formatTime(value: string) {
           </div>
         </div>
       </div>
-      <Flame :size="96" />
+      <div class="seckill-hero-card">
+        <Flame :size="42" />
+        <span>当前热度</span>
+        <strong>{{ runningCount > 0 ? '抢购中' : '等待开场' }}</strong>
+      </div>
     </section>
 
     <section class="seckill-session-bar" aria-label="秒杀场次">
@@ -192,7 +225,7 @@ function formatTime(value: string) {
 
     <section v-if="activeSession" class="seckill-notice">
       <Clock3 :size="18" />
-      <span>{{ activeSession.name }} · {{ stateLabel(activeSession.state) }}</span>
+      <span>{{ activeSession.name }} · {{ stateLabel(activeSession.state) }} · 抢购成功后进入订单准备支付页</span>
       <el-button text @click="loadItems(activeSession.id)">
         <RotateCcw :size="16" />
         刷新
@@ -207,7 +240,7 @@ function formatTime(value: string) {
           <div class="seckill-card-media">
             <span>{{ item.badge }}</span>
             <div>
-              <ShoppingBag :size="42" />
+              <img :src="seckillImage(item)" :alt="item.productName" />
               <strong>{{ item.productName.slice(0, 4) }}</strong>
             </div>
           </div>
@@ -223,8 +256,11 @@ function formatTime(value: string) {
             <p>{{ item.subtitle }}</p>
 
             <div class="seckill-price-row">
-              <strong>{{ money(item.seckillPrice) }}</strong>
-              <span>{{ money(item.originalPrice) }}</span>
+              <div>
+                <small>秒杀价</small>
+                <strong>{{ money(item.seckillPrice) }}</strong>
+              </div>
+              <span>日常价 {{ money(item.originalPrice) }}</span>
             </div>
 
             <div class="seckill-stock">
@@ -254,10 +290,10 @@ function formatTime(value: string) {
 
     <section v-if="result" class="seckill-result-panel">
       <el-tag :type="result.status === 'FAILED' ? 'danger' : result.status === 'CREATED' ? 'success' : 'warning'">
-        {{ result.status }}
+        {{ result.status === 'CREATED' ? '已创建订单' : result.status === 'FAILED' ? '抢购失败' : '处理中' }}
       </el-tag>
       <div>
-        <strong>{{ result.message }}</strong>
+        <strong>{{ resultMessageText(result.message) }}</strong>
         <span>{{ result.requestId }}</span>
       </div>
       <el-button v-if="result.orderNo" type="primary" @click="router.push(`/orders/${result.orderNo}`)">

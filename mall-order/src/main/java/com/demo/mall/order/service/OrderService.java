@@ -1,6 +1,8 @@
 package com.demo.mall.order.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.demo.mall.common.api.PageResult;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.demo.mall.common.api.Result;
 import com.demo.mall.common.error.BizException;
@@ -20,6 +22,7 @@ import com.demo.mall.order.dto.OrderDetailResponse;
 import com.demo.mall.order.dto.OrderInternalResponse;
 import com.demo.mall.order.dto.OrderItemRequest;
 import com.demo.mall.order.dto.OrderItemResponse;
+import com.demo.mall.order.dto.OrderListItemResponse;
 import com.demo.mall.order.entity.Order;
 import com.demo.mall.order.entity.OrderItem;
 import com.demo.mall.order.mapper.OrderItemMapper;
@@ -222,6 +225,22 @@ public class OrderService {
         return toDetail(order, listItems(orderNo));
     }
 
+    public PageResult<OrderListItemResponse> listForUser(Long userId, long pageNo, long pageSize) {
+        long normalizedPageNo = Math.max(pageNo, 1);
+        long normalizedPageSize = Math.min(Math.max(pageSize, 1), 50);
+        Page<Order> page = orderMapper.selectPage(
+                Page.of(normalizedPageNo, normalizedPageSize),
+                new LambdaQueryWrapper<Order>()
+                        .eq(Order::getUserId, userId)
+                        .orderByDesc(Order::getCreatedAt)
+        );
+        List<OrderListItemResponse> records = page.getRecords()
+                .stream()
+                .map(this::toListItem)
+                .toList();
+        return PageResult.of(records, page.getTotal(), normalizedPageNo, normalizedPageSize);
+    }
+
     public OrderInternalResponse internalDetail(String orderNo) {
         Order order = getOrder(orderNo);
         return new OrderInternalResponse(order.getOrderNo(), order.getUserId(), order.getTotalAmount(), order.getStatus());
@@ -408,6 +427,27 @@ public class OrderService {
                 order.getExpireTime(),
                 order.getRemark(),
                 items.stream().map(this::toItemResponse).toList()
+        );
+    }
+
+    private OrderListItemResponse toListItem(Order order) {
+        List<OrderItem> items = listItems(order.getOrderNo());
+        int itemCount = items.stream()
+                .map(OrderItem::getQuantity)
+                .reduce(0, Integer::sum);
+        String firstProductName = items.isEmpty() ? null : items.get(0).getProductName();
+        return new OrderListItemResponse(
+                order.getOrderNo(),
+                order.getTotalAmount(),
+                order.getStatus(),
+                order.getPayNo(),
+                order.getPayTime(),
+                order.getCancelTime(),
+                order.getExpireTime(),
+                order.getRemark(),
+                itemCount,
+                firstProductName,
+                order.getCreatedAt()
         );
     }
 

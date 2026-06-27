@@ -76,6 +76,29 @@ mall:
     secret: ${MALL_JWT_SECRET:mall-demo-jwt-secret-key-for-local-development}
   cors:
     allowed-origin-patterns: ${MALL_CORS_ALLOWED_ORIGIN_PATTERNS:http://localhost:5173}
+  gateway:
+    flow:
+      auth-login:
+        qps: ${MALL_FLOW_AUTH_LOGIN_QPS:80}
+        burst: ${MALL_FLOW_AUTH_LOGIN_BURST:20}
+      product-read:
+        qps: ${MALL_FLOW_PRODUCT_READ_QPS:600}
+        burst: ${MALL_FLOW_PRODUCT_READ_BURST:100}
+      seckill-catalog:
+        qps: ${MALL_FLOW_SECKILL_CATALOG_QPS:500}
+        burst: ${MALL_FLOW_SECKILL_CATALOG_BURST:100}
+      seckill-token:
+        qps: ${MALL_FLOW_SECKILL_TOKEN_QPS:200}
+        burst: ${MALL_FLOW_SECKILL_TOKEN_BURST:50}
+      seckill-submit:
+        qps: ${MALL_FLOW_SECKILL_SUBMIT_QPS:120}
+        burst: ${MALL_FLOW_SECKILL_SUBMIT_BURST:30}
+      order-route:
+        qps: ${MALL_FLOW_ORDER_ROUTE_QPS:700}
+        burst: ${MALL_FLOW_ORDER_ROUTE_BURST:100}
+      promotion-route:
+        qps: ${MALL_FLOW_PROMOTION_ROUTE_QPS:700}
+        burst: ${MALL_FLOW_PROMOTION_ROUTE_BURST:100}
 
 management:
   endpoints:

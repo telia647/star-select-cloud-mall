@@ -15,7 +15,7 @@ $ErrorActionPreference = "Continue"
 
 # VM addresses are local environment values. Set MALL_VM_HOST or pass -VmHost.
 # The fallback below is only this repository's local example, not a project constant.
-$exampleVmHost = "192.168.150.105"
+$exampleVmHost = "192.168.56.101"
 
 if ([string]::IsNullOrWhiteSpace($VmHost)) {
     $VmHost = $exampleVmHost

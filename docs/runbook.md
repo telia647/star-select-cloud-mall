@@ -45,9 +45,11 @@ $env:MALL_REDIS_PORT="6379"
 $env:MALL_ROCKETMQ_NAME_SERVER="${env:MALL_VM_HOST}:9876"
 $env:MALL_SENTINEL_DASHBOARD="${env:MALL_VM_HOST}:8858"
 $env:MALL_JWT_SECRET="replace-with-at-least-32-byte-secret"
+$env:MALL_SECURITY_FAIL_ON_DEFAULT_SECRET="false"
+$env:MALL_PAYMENT_CALLBACK_SECRET="replace-with-payment-callback-secret"
 ```
 
-`root / root`, empty Redis password, and the JWT placeholder are local acceptance values only. In any shared or deployed environment, replace them with environment-specific credentials and keep secrets out of Git.
+`root / root`, empty Redis password, the JWT placeholder, and the payment callback placeholder are local acceptance values only. In any shared or deployed environment, replace them with environment-specific credentials and keep secrets out of Git. For production-like startup, set `MALL_SECURITY_FAIL_ON_DEFAULT_SECRET=true` so services fail fast if a demo JWT secret is still configured.
 
 In IDEA, prefer the environment-variable table editor instead of a single pasted line. This avoids hidden spaces in names such as `MALL_ROCKETMQ_NAME_SERVER`.
 
@@ -215,6 +217,13 @@ Scripted API smoke checks:
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\smoke-api.ps1
 powershell -ExecutionPolicy Bypass -File .\scripts\smoke-api.ps1 -RunSeckill
+```
+
+Pre-launch readiness checks:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\prelaunch-check.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\prelaunch-check.ps1 -RequireProductionSecrets
 ```
 
 1. Login with `admin / 123456`.

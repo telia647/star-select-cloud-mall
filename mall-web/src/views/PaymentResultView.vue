@@ -24,6 +24,13 @@ async function load() {
     loading.value = false
   }
 }
+
+function payChannelText(channel: string) {
+  if (channel === 'MOCK') {
+    return '模拟支付'
+  }
+  return channel || '-'
+}
 </script>
 
 <template>
@@ -46,7 +53,7 @@ async function load() {
           </div>
           <div>
             <span>渠道</span>
-            <strong>{{ payment.payChannel }}</strong>
+            <strong>{{ payChannelText(payment.payChannel) }}</strong>
           </div>
         </div>
         <div class="action-row centered">

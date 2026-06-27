@@ -7,7 +7,7 @@
 | Date |  |
 | Commit |  |
 | Middleware mode | VM Docker middleware |
-| VM IP | `192.168.150.103` |
+| VM IP | `<your-vm-ip>` |
 | Backend mode | local IDEA / local jar |
 | Front-end mode | Vite dev server |
 

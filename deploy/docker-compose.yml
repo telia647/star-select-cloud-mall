@@ -49,6 +49,8 @@ services:
       - "8848:8848"
       - "9848:9848"
       - "9849:9849"
+      # Nacos 3.x console listens on container port 8080. Keep VM host 8080 free for mall-gateway.
+      - "8849:8080"
 
   rocketmq-namesrv:
     image: apache/rocketmq:5.3.1
@@ -122,7 +124,8 @@ services:
     environment:
       JAVA_OPTS: "-Drocketmq.namesrv.addr=rocketmq-namesrv:9876"
     ports:
-      - "8088:8080"
+      # The current dashboard image starts embedded Tomcat on 8082.
+      - "8088:8082"
 
   sentinel-dashboard:
     image: mall-sentinel-dashboard:${SENTINEL_VERSION:-1.8.9}

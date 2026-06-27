@@ -55,7 +55,7 @@ docs/assets/
 - Admin can create/update activity/session/SKU and preheat stock.
 - Member can browse catalog, issue seckill token, submit seckill, poll result, pay order.
 - `wms_stock_flow`, `oms_order_status_log`, `promo_operation_log`, and `oms_mq_consume_log` contain records after acceptance.
-- Prometheus scrapes backend services and Grafana dashboard shows seckill metrics.
+- If the observability profile is enabled, Prometheus scrapes backend services and Grafana dashboard shows seckill metrics.
 - k6 smoke test meets the thresholds in `docs/performance-testing.md`.
 - If k6 is unavailable locally, `scripts/load-seckill.ps1` fallback result is recorded in `docs/acceptance-report.md`.
 - `.env` files, local logs, `target`, `node_modules`, and `dist` are not committed.

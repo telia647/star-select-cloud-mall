@@ -1,11 +1,13 @@
 package com.demo.mall.order.controller;
 
 import com.demo.mall.common.api.Result;
+import com.demo.mall.common.api.PageResult;
 import com.demo.mall.common.security.header.SecurityHeaders;
 import com.demo.mall.order.dto.OrderCancelResponse;
 import com.demo.mall.order.dto.OrderCreateRequest;
 import com.demo.mall.order.dto.OrderCreateResponse;
 import com.demo.mall.order.dto.OrderDetailResponse;
+import com.demo.mall.order.dto.OrderListItemResponse;
 import com.demo.mall.order.service.OrderService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -36,6 +39,13 @@ public class OrderController {
     public Result<OrderDetailResponse> detail(@RequestHeader(SecurityHeaders.USER_ID) Long userId,
                                               @PathVariable("orderNo") String orderNo) {
         return Result.success(orderService.detailForUser(userId, orderNo));
+    }
+
+    @GetMapping("/me")
+    public Result<PageResult<OrderListItemResponse>> listMine(@RequestHeader(SecurityHeaders.USER_ID) Long userId,
+                                                              @RequestParam(defaultValue = "1") long pageNo,
+                                                              @RequestParam(defaultValue = "10") long pageSize) {
+        return Result.success(orderService.listForUser(userId, pageNo, pageSize));
     }
 
     @PostMapping("/{orderNo}/cancel")

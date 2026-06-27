@@ -1,6 +1,8 @@
 package com.demo.mall.order.service;
 
 import com.demo.mall.common.api.Result;
+import com.demo.mall.common.api.PageResult;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.demo.mall.order.client.InventoryClient;
 import com.demo.mall.order.client.ProductClient;
 import com.demo.mall.order.client.dto.ProductSkuResponse;
@@ -9,7 +11,9 @@ import com.demo.mall.order.client.dto.StockReleaseRequest;
 import com.demo.mall.order.dto.OrderCreateRequest;
 import com.demo.mall.order.dto.OrderCreateResponse;
 import com.demo.mall.order.dto.OrderItemRequest;
+import com.demo.mall.order.dto.OrderListItemResponse;
 import com.demo.mall.order.entity.Order;
+import com.demo.mall.order.entity.OrderItem;
 import com.demo.mall.order.mapper.OrderItemMapper;
 import com.demo.mall.order.mapper.OrderMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -179,6 +183,35 @@ class OrderServiceTest {
                 eq(3001L),
                 eq(1)
         );
+    }
+
+    @Test
+    void listForUserReturnsPagedOrderSummaries() {
+        Order order = new Order();
+        order.setOrderNo("O2001");
+        order.setUserId(1L);
+        order.setTotalAmount(new BigDecimal("299.00"));
+        order.setStatus(10);
+        order.setRemark("checkout");
+        Page<Order> page = Page.of(1, 10);
+        page.setRecords(List.of(order));
+        page.setTotal(1);
+        when(orderMapper.selectPage(any(), any())).thenReturn(page);
+
+        OrderItem item = new OrderItem();
+        item.setOrderNo("O2001");
+        item.setProductName("Demo Phone");
+        item.setQuantity(2);
+        when(orderItemMapper.selectList(any())).thenReturn(List.of(item));
+
+        PageResult<OrderListItemResponse> result = orderService.listForUser(1L, 1, 10);
+
+        assertThat(result.total()).isEqualTo(1);
+        assertThat(result.records()).hasSize(1);
+        OrderListItemResponse summary = result.records().get(0);
+        assertThat(summary.orderNo()).isEqualTo("O2001");
+        assertThat(summary.itemCount()).isEqualTo(2);
+        assertThat(summary.firstProductName()).isEqualTo("Demo Phone");
     }
 
     @Test

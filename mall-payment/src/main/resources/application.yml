@@ -37,6 +37,8 @@ mybatis-plus:
 mall:
   jwt:
     secret: ${MALL_JWT_SECRET:mall-demo-jwt-secret-key-for-local-development}
+  payment:
+    callback-secret: ${MALL_PAYMENT_CALLBACK_SECRET:local-mock-payment-callback-secret}
 
 management:
   endpoints:

@@ -21,6 +21,16 @@ const adding = ref(false)
 const selectedSku = computed(() => product.value?.skus.find((item) => item.id === selectedSkuId.value))
 const meta = computed(() => (product.value ? getProductPresentation(product.value) : null))
 const selectedSpec = computed(() => parseSpec(selectedSku.value?.specJson))
+const galleryImages = computed(() => {
+  if (!product.value) {
+    return []
+  }
+  const images = parseGalleryImages(product.value.galleryImages)
+  if (product.value.mainImage && !images.includes(product.value.mainImage)) {
+    images.unshift(product.value.mainImage)
+  }
+  return images
+})
 
 onMounted(load)
 
@@ -59,6 +69,20 @@ function skuLabel(sku: SkuResponse) {
   const spec = parseSpec(sku.specJson)
   return spec ? `${sku.skuCode} · ${spec}` : sku.skuCode
 }
+function parseGalleryImages(value?: string | null) {
+  if (!value) {
+    return []
+  }
+  try {
+    const parsed = JSON.parse(value) as unknown
+    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === 'string' && item.length > 0) : []
+  } catch {
+    return value
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean)
+  }
+}
 </script>
 
 <template>
@@ -73,11 +97,17 @@ function skuLabel(sku: SkuResponse) {
         <section class="detail-gallery">
           <div class="detail-media product-media" :class="meta.tone">
             <span class="product-badge">{{ meta.badge }}</span>
-            <div class="product-object detail-object">
+            <img v-if="product.mainImage" class="product-image detail-image" :src="product.mainImage" :alt="product.name" />
+            <div v-else class="product-object detail-object">
               <span>{{ meta.imageLabel }}</span>
             </div>
           </div>
-          <div class="gallery-thumbs">
+          <div v-if="galleryImages.length > 0" class="gallery-thumbs gallery-image-thumbs">
+            <button v-for="image in galleryImages" :key="image" type="button">
+              <img :src="image" :alt="product.name" />
+            </button>
+          </div>
+          <div v-else class="gallery-thumbs">
             <button v-for="feature in meta.highlights" :key="feature" type="button">
               {{ feature }}
             </button>
@@ -94,6 +124,7 @@ function skuLabel(sku: SkuResponse) {
           </div>
 
           <h1>{{ product.name }}</h1>
+          <div v-if="product.shopName" class="detail-shop-name">{{ product.shopName }}</div>
           <p class="detail-subtitle">{{ product.subtitle }}</p>
 
           <div class="price-panel">

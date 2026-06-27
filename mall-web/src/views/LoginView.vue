@@ -37,7 +37,7 @@ async function submit() {
           <div class="brand-mark large">
             <Store :size="28" />
           </div>
-          <h1>登录 NovaMall</h1>
+          <h1>登录星选商城</h1>
           <p>使用演示账号可直接体验商品、购物车、订单和支付链路。</p>
         </div>
 
@@ -62,7 +62,7 @@ async function submit() {
 
       <div class="auth-visual" :style="{ backgroundImage: `linear-gradient(180deg, rgba(14, 24, 34, 0.2), rgba(14, 24, 34, 0.72)), url(${heroImage})` }">
         <div>
-          <span>Prototype Ready</span>
+          <span>原型已就绪</span>
           <strong>完整商城购物体验</strong>
         </div>
       </div>
