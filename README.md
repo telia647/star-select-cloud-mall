@@ -19,9 +19,9 @@ Spring Cloud Alibaba microservice mall focused on high-concurrency flash-sale or
 ## Implemented Capabilities
 
 - Product read cache: Redis cache for product detail, SKU detail, and category list, with short TTL empty values and Redis rebuild locks.
-- Order consistency: payment still calls order synchronously, and also writes local messages plus RocketMQ `OrderPaidEvent`; order payment handling is idempotent.
+- Order consistency: payment still calls order synchronously for the paid state transition, then writes RocketMQ events to a local outbox for scheduled async publishing; order payment handling is idempotent.
 - Inventory event skeleton: order publishes `InventoryDeductedEvent` after paid inventory deduction.
-- Seckill activity flow: promotion-owned activity/session/SKU validation, short-lived seckill token, Redis Lua token plus stock plus duplicate-buy guard, async order creation through RocketMQ, and synchronous fallback when MQ send fails.
+- Seckill activity flow: promotion-owned activity/session/SKU validation, short-lived seckill token, Redis Lua token plus stock plus duplicate-buy guard, and outbox-backed async order creation through RocketMQ.
 - Seckill order consistency: server-side seckill price snapshot, `requestId` idempotency, and `oms_seckill_reservation` records that release Redis seckill stock when unpaid orders are canceled or expired.
 - Seckill catalog: dedicated promotion service for seckill activity sessions and activity SKU listing, consumed by the C-side flash-sale page. Seed data uses relative times so a fresh local database has a running session.
 - Seckill stock reconciliation: promotion service periodically reads Redis activity stock and writes it back to `promo_seckill_sku.available_stock`, so C-side catalog stock can converge after high-concurrency pre-deducts.

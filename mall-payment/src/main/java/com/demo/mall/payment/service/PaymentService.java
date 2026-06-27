@@ -191,7 +191,7 @@ public class PaymentService {
     }
 
     private void publishOrderPaid(PaymentOrder payment) {
-        localMessageService.saveAndSend(
+        localMessageService.savePending(
                 "payment:order-paid:" + payment.getPayNo(),
                 "orderPaid-out-0",
                 "order-paid-topic",

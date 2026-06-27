@@ -19,7 +19,12 @@ import com.demo.mall.product.mapper.ShopMapper;
 import com.demo.mall.product.mapper.SkuMapper;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.UUID;
 
 @Service
@@ -54,9 +59,10 @@ public class ProductService {
                 wrapper
         );
 
+        Map<Long, Shop> shopsById = findShops(page.getRecords());
         List<ProductListItemResponse> records = page.getRecords()
                 .stream()
-                .map(this::toListItem)
+                .map(product -> toListItem(product, shopsById))
                 .toList();
         return PageResult.of(records, page.getTotal(), page.getCurrent(), page.getSize());
     }
@@ -203,17 +209,32 @@ public class ProductService {
         }
     }
 
-    private ProductListItemResponse toListItem(Product product) {
+    private ProductListItemResponse toListItem(Product product, Map<Long, Shop> shopsById) {
+        Shop shop = product.getShopId() == null ? null : shopsById.get(product.getShopId());
         return new ProductListItemResponse(
                 product.getId(),
                 product.getCategoryId(),
                 product.getShopId(),
-                shopName(product.getShopId()),
+                shop == null ? null : shop.getName(),
                 product.getName(),
                 product.getSubtitle(),
                 product.getMainImage(),
                 product.getStatus()
         );
+    }
+
+    private Map<Long, Shop> findShops(List<Product> products) {
+        List<Long> shopIds = products.stream()
+                .map(Product::getShopId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        if (shopIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        return shopMapper.selectBatchIds(shopIds)
+                .stream()
+                .collect(Collectors.toMap(Shop::getId, Function.identity(), (left, right) -> left));
     }
 
     private String shopName(Long shopId) {

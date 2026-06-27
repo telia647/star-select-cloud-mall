@@ -41,6 +41,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Collections;
+import java.util.stream.Collectors;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Service
@@ -234,9 +236,10 @@ public class OrderService {
                         .eq(Order::getUserId, userId)
                         .orderByDesc(Order::getCreatedAt)
         );
+        Map<String, List<OrderItem>> itemsByOrderNo = listItemsByOrderNo(page.getRecords());
         List<OrderListItemResponse> records = page.getRecords()
                 .stream()
-                .map(this::toListItem)
+                .map(order -> toListItem(order, itemsByOrderNo.getOrDefault(order.getOrderNo(), List.of())))
                 .toList();
         return PageResult.of(records, page.getTotal(), normalizedPageNo, normalizedPageSize);
     }
@@ -415,6 +418,20 @@ public class OrderService {
                 .orderByAsc(OrderItem::getId));
     }
 
+    private Map<String, List<OrderItem>> listItemsByOrderNo(List<Order> orders) {
+        List<String> orderNos = orders.stream()
+                .map(Order::getOrderNo)
+                .toList();
+        if (orderNos.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        return orderItemMapper.selectList(new LambdaQueryWrapper<OrderItem>()
+                        .in(OrderItem::getOrderNo, orderNos)
+                        .orderByAsc(OrderItem::getId))
+                .stream()
+                .collect(Collectors.groupingBy(OrderItem::getOrderNo, LinkedHashMap::new, Collectors.toList()));
+    }
+
     private OrderDetailResponse toDetail(Order order, List<OrderItem> items) {
         return new OrderDetailResponse(
                 order.getOrderNo(),
@@ -430,8 +447,7 @@ public class OrderService {
         );
     }
 
-    private OrderListItemResponse toListItem(Order order) {
-        List<OrderItem> items = listItems(order.getOrderNo());
+    private OrderListItemResponse toListItem(Order order, List<OrderItem> items) {
         int itemCount = items.stream()
                 .map(OrderItem::getQuantity)
                 .reduce(0, Integer::sum);

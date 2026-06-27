@@ -40,6 +40,15 @@ public class PaymentLocalMessageService {
                                String topic,
                                String tag,
                                Object payload) {
+        PaymentLocalMessage message = savePending(messageKey, bindingName, topic, tag, payload);
+        return send(message, payload);
+    }
+
+    public PaymentLocalMessage savePending(String messageKey,
+                                           String bindingName,
+                                           String topic,
+                                           String tag,
+                                           Object payload) {
         PaymentLocalMessage message = new PaymentLocalMessage();
         message.setMessageKey(messageKey);
         message.setBindingName(bindingName);
@@ -49,10 +58,13 @@ public class PaymentLocalMessageService {
         message.setStatus(PENDING);
         message.setRetryCount(0);
         paymentLocalMessageMapper.insert(message);
+        return message;
+    }
 
+    private boolean send(PaymentLocalMessage message, Object payload) {
         boolean sent = false;
         try {
-            sent = streamBridge.send(bindingName, payload);
+            sent = streamBridge.send(message.getBindingName(), payload);
             message.setStatus(sent ? SENT : FAILED);
             message.setSentAt(sent ? LocalDateTime.now() : null);
             message.setLastError(sent ? null : "streamBridge returned false");

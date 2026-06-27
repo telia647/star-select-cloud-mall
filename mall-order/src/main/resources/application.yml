@@ -60,6 +60,8 @@ mybatis-plus:
 mall:
   jwt:
     secret: ${MALL_JWT_SECRET:mall-demo-jwt-secret-key-for-local-development}
+  local-message:
+    retry-delay-ms: ${MALL_LOCAL_MESSAGE_RETRY_DELAY_MS:1000}
 
 management:
   endpoints:

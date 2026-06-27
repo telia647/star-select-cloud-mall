@@ -83,7 +83,7 @@ class PaymentServiceTest {
         ArgumentCaptor<OrderPaidRequest> paidCaptor = ArgumentCaptor.forClass(OrderPaidRequest.class);
         verify(paymentOrderMapper).insert(paymentCaptor.capture());
         verify(orderClient).markPaid(any(), paidCaptor.capture());
-        verify(localMessageService).saveAndSend(any(), any(), any(), any(), any());
+        verify(localMessageService).savePending(any(), any(), any(), any(), any());
 
         assertThat(response.payNo()).isEqualTo("T1001");
         assertThat(response.amount()).isEqualByComparingTo("99.00");

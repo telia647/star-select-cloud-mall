@@ -14,22 +14,24 @@ public class OrderEventPublisher {
     }
 
     public boolean publishInventoryDeducted(InventoryDeductedEvent event) {
-        return localMessageService.saveAndSend(
+        localMessageService.savePending(
                 "order:inventory-deducted:" + event.orderNo(),
                 "inventoryDeducted-out-0",
                 "inventory-deducted-topic",
                 "deducted",
                 event
         );
+        return true;
     }
 
     public boolean publishSeckillOrder(SeckillOrderEvent event) {
-        return localMessageService.saveAndSend(
+        localMessageService.savePending(
                 "order:seckill:" + event.requestId(),
                 "seckillOrder-out-0",
                 "seckill-order-topic",
                 "create",
                 event
         );
+        return true;
     }
 }

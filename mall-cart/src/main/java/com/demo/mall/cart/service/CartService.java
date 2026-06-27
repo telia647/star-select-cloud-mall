@@ -21,14 +21,20 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class CartService {
 
+    private static final Duration SKU_CACHE_TTL = Duration.ofMinutes(5);
+
     private final CartItemMapper cartItemMapper;
     private final ProductClient productClient;
     private final OrderClient orderClient;
+    private final ConcurrentHashMap<Long, CachedSku> skuCache = new ConcurrentHashMap<>();
 
     public CartService(CartItemMapper cartItemMapper, ProductClient productClient, OrderClient orderClient) {
         this.cartItemMapper = cartItemMapper;
@@ -119,9 +125,16 @@ public class CartService {
     }
 
     private ProductSkuResponse getSku(Long skuId) {
+        CachedSku cached = skuCache.get(skuId);
+        if (cached != null && !cached.isExpired()) {
+            return cached.sku();
+        }
+
         Result<ProductSkuResponse> result = productClient.getSku(skuId);
         assertSuccess(result);
-        return result.getData();
+        ProductSkuResponse sku = result.getData();
+        skuCache.put(skuId, new CachedSku(sku, Instant.now().plus(SKU_CACHE_TTL)));
+        return sku;
     }
 
     private void refreshSkuSnapshot(CartItem item, ProductSkuResponse sku) {
@@ -149,6 +162,13 @@ public class CartService {
         if (result == null || !result.isSuccess()) {
             String message = result == null ? "remote service call failed" : result.getMessage();
             throw new BizException(ErrorCode.INTERNAL_ERROR, message);
+        }
+    }
+
+    private record CachedSku(ProductSkuResponse sku, Instant expiresAt) {
+
+        private boolean isExpired() {
+            return !Instant.now().isBefore(expiresAt);
         }
     }
 }
