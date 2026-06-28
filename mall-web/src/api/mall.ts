@@ -3,7 +3,12 @@ import type {
   CartItem,
   CategoryResponse,
   AdminIdResponse,
+  AiChatResponse,
+  AiConversation,
+  AiLog,
+  AiMessage,
   LoginResponse,
+  KnowledgeDoc,
   MemberBenefit,
   MemberCoupon,
   OrderCreateResponse,
@@ -317,4 +322,52 @@ export function listAdminOperationLogs() {
     () => http.get<PromotionOperationLog[], PromotionOperationLog[]>('/promotions/admin/seckill/operation-logs'),
     () => prototypeListAdminOperationLogs()
   )
+}
+
+export function aiChat(payload: { conversationId?: string; message: string }) {
+  return http.post<AiChatResponse, AiChatResponse>('/ai/chat', payload, { timeout: 60000 })
+}
+
+export function listAiConversations() {
+  return http.get<AiConversation[], AiConversation[]>('/ai/conversations')
+}
+
+export function listAiMessages(conversationId: string) {
+  return http.get<AiMessage[], AiMessage[]>(`/ai/conversations/${conversationId}/messages`)
+}
+
+export function deleteAiConversation(conversationId: string) {
+  return http.delete<void, void>(`/ai/conversations/${conversationId}`, { timeout: 0 })
+}
+
+export function listKnowledgeDocs(params: { keyword?: string; category?: string; status?: number } = {}) {
+  return http.get<KnowledgeDoc[], KnowledgeDoc[]>('/ai/admin/knowledge/docs', { params })
+}
+
+export function createKnowledgeDoc(payload: { title: string; category: string; content: string; status: number }) {
+  return http.post<KnowledgeDoc, KnowledgeDoc>('/ai/admin/knowledge/docs', payload)
+}
+
+export function updateKnowledgeDoc(id: number, payload: { title: string; category: string; content: string; status: number }) {
+  return http.put<KnowledgeDoc, KnowledgeDoc>(`/ai/admin/knowledge/docs/${id}`, payload)
+}
+
+export function deleteKnowledgeDoc(id: string) {
+  return http.delete<void, void>(`/ai/admin/knowledge/docs/${id}`)
+}
+
+export function indexKnowledgeDoc(id: string) {
+  return http.post<KnowledgeDoc, KnowledgeDoc>(`/ai/admin/knowledge/docs/${id}/embedding`, undefined, { timeout: 120000 })
+}
+
+export function syncProductKnowledge() {
+  return http.post<KnowledgeDoc[], KnowledgeDoc[]>('/ai/admin/knowledge/docs/sync-products', undefined, { timeout: 120000 })
+}
+
+export function listAiModelCallLogs() {
+  return http.get<AiLog[], AiLog[]>('/ai/admin/logs/model-calls')
+}
+
+export function listAiToolCallLogs() {
+  return http.get<AiLog[], AiLog[]>('/ai/admin/logs/tool-calls')
 }

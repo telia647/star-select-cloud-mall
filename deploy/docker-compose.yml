@@ -138,6 +138,20 @@ services:
     ports:
       - "8858:8858"
 
+  milvus:
+    image: milvusdb/milvus:v2.5.4
+    container_name: mall-milvus
+    command: ["milvus", "run", "standalone"]
+    environment:
+      ETCD_USE_EMBED: "true"
+      COMMON_STORAGETYPE: local
+    restart: unless-stopped
+    ports:
+      - "19530:19530"
+      - "9091:9091"
+    volumes:
+      - mall-milvus-data:/var/lib/milvus
+
   prometheus:
     image: prom/prometheus:v2.54.1
     container_name: mall-prometheus
@@ -179,3 +193,4 @@ volumes:
   mall-redis-data:
   mall-prometheus-data:
   mall-grafana-data:
+  mall-milvus-data:

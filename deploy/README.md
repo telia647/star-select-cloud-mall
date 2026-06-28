@@ -12,6 +12,7 @@ This directory is the VM-side middleware package. Copy `deploy/` to the Linux VM
 - RocketMQ topic initializer for `order-paid-topic`, `seckill-order-topic`, and `inventory-deducted-topic`
 - RocketMQ Dashboard `8088` on the VM, mapped to the dashboard container's embedded Tomcat port `8082`
 - Sentinel Dashboard `8858`
+- Milvus standalone `19530`, health/metrics `9091`
 - Optional Prometheus `9090` and Grafana `3000`
 
 ## Start On VM
@@ -29,7 +30,7 @@ Set `MALL_VM_HOST` in `.env` to the current VM IP. The VM IP can change between 
 If only the required middleware is needed:
 
 ```bash
-docker compose up -d --build mysql redis nacos rocketmq-namesrv rocketmq-broker rocketmq-init rocketmq-dashboard sentinel-dashboard
+docker compose up -d --build mysql redis nacos rocketmq-namesrv rocketmq-broker rocketmq-init rocketmq-dashboard sentinel-dashboard milvus
 ```
 
 `rocketmq-init` is a one-shot container. It should exit after the three business topics are created. Run `docker compose logs rocketmq-init` if RocketMQ consumers report missing topic routes.
@@ -98,6 +99,8 @@ MALL_REDIS_HOST=<your-vm-ip>
 MALL_REDIS_PORT=6379
 MALL_ROCKETMQ_NAME_SERVER=<your-vm-ip>:9876
 MALL_SENTINEL_DASHBOARD=<your-vm-ip>:8858
+MALL_MILVUS_HOST=<your-vm-ip>
+MALL_MILVUS_PORT=19530
 MALL_JWT_SECRET=replace-with-at-least-32-byte-secret
 ```
 

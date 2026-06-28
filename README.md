@@ -13,6 +13,7 @@ Spring Cloud Alibaba microservice mall focused on high-concurrency flash-sale or
 - `mall-order`: order creation, detail, cancel, payment status update, seckill token, queueing, and reservation flow
 - `mall-inventory`: stock lock, release, and deduct
 - `mall-payment`: mock payment, payment detail, and order-paid event publishing
+- `mall-ai`: AI customer assistant, RAG knowledge base, and read-only order Agent
 - `mall-web`: Vue 3 front-end for product, cart, order, payment, and seckill acceptance
 - `mall-common`, `mall-common-web`, `mall-common-security`: shared response, exception, trace, and JWT support
 
@@ -71,7 +72,7 @@ The default local acceptance workflow is:
 VM Docker middleware + Windows/IDEA Java services + local Vue dev server
 ```
 
-The middleware stack is MySQL, Redis, Nacos, RocketMQ, RocketMQ Dashboard, and Sentinel Dashboard. MySQL/Redis/RocketMQ are the data and message middleware; Nacos provides service discovery; Sentinel provides traffic protection and dashboard visibility. The compose stack also runs a one-shot RocketMQ topic initializer for `order-paid-topic`, `seckill-order-topic`, and `inventory-deducted-topic`.
+The middleware stack is MySQL, Redis, Nacos, RocketMQ, RocketMQ Dashboard, Sentinel Dashboard, and Milvus. MySQL/Redis/RocketMQ are the data and message middleware; Nacos provides service discovery; Sentinel provides traffic protection and dashboard visibility; Milvus stores AI knowledge vectors. The compose stack also runs a one-shot RocketMQ topic initializer for `order-paid-topic`, `seckill-order-topic`, and `inventory-deducted-topic`.
 
 The VM-side Docker Compose package is in [`deploy/`](deploy/README.md). Copy that directory to the VM, create `.env` from `.env.example`, set `MALL_VM_HOST` to the current VM IP, then run `docker compose up -d --build`.
 
@@ -131,6 +132,7 @@ Open these VM ports to the Windows host:
 - `9876`, `10909`, `10911` RocketMQ
 - `8088` RocketMQ Dashboard
 - `8858` Sentinel Dashboard
+- `19530`, `9091` Milvus
 
 ## Optional Local Middleware
 
@@ -139,7 +141,7 @@ cd deploy
 docker compose up -d
 ```
 
-This starts MySQL, Redis, Nacos, RocketMQ NameServer, RocketMQ Broker, RocketMQ Dashboard, and Sentinel Dashboard on the current machine. This is optional; the normal workflow for this repository can use middleware already running in the VM.
+This starts MySQL, Redis, Nacos, RocketMQ NameServer, RocketMQ Broker, RocketMQ Dashboard, Sentinel Dashboard, and Milvus on the current machine. This is optional; the normal workflow for this repository can use middleware already running in the VM.
 
 Optional all-in-one Docker validation:
 
@@ -191,6 +193,7 @@ Open these VM ports to the Windows host:
 - `9876`, `10909`, `10911` RocketMQ
 - `8088` RocketMQ Dashboard
 - `8858` Sentinel Dashboard
+- `19530`, `9091` Milvus
 
 Find the VM IP:
 
@@ -229,6 +232,10 @@ All service configs support these variables. IP values are intentionally not fix
 - `MALL_ROCKETMQ_NAME_SERVER`: override RocketMQ NameServer, for example `192.168.56.101:9876`
 - `MALL_ROCKETMQ_BROKER_IP`: broker IP advertised to Java clients when starting Docker Compose
 - `MALL_SENTINEL_DASHBOARD`: optional Sentinel dashboard address, default `${MALL_VM_HOST}:8858`
+- `MALL_MILVUS_HOST`: override Milvus host, default `${MALL_VM_HOST}`
+- `MALL_MILVUS_PORT`: override Milvus gRPC port, default `19530`
+- `MALL_AI_DEEPSEEK_API_KEY`: DeepSeek chat API key for `mall-ai`
+- `MALL_AI_EMBEDDING_API_KEY`: OpenAI-compatible embedding API key for `mall-ai`
 
 ## Run Services
 
@@ -243,6 +250,7 @@ mvn -pl mall-cart spring-boot:run
 mvn -pl mall-order spring-boot:run
 mvn -pl mall-inventory spring-boot:run
 mvn -pl mall-payment spring-boot:run
+mvn -pl mall-ai spring-boot:run
 mvn -pl mall-gateway spring-boot:run
 ```
 
@@ -272,6 +280,7 @@ Service ports:
 | `mall-cart` | 8086 |
 | `mall-payment` | 8087 |
 | `mall-promotion` | 8089 |
+| `mall-ai` | 8090 |
 
 ## Run Front-End
 

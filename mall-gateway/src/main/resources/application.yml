@@ -70,6 +70,12 @@ spring:
                 - Path=/api/payments/**
               filters:
                 - StripPrefix=1
+            - id: mall-ai
+              uri: lb://mall-ai
+              predicates:
+                - Path=/api/ai/**
+              filters:
+                - StripPrefix=1
 
 mall:
   jwt:

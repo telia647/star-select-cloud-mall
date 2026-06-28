@@ -11,6 +11,9 @@ import PaymentResultView from '@/views/PaymentResultView.vue'
 import SeckillView from '@/views/SeckillView.vue'
 import AdminSeckillView from '@/views/AdminSeckillView.vue'
 import ProfileView from '@/views/ProfileView.vue'
+import AiAssistantView from '@/views/AiAssistantView.vue'
+import AdminAiKnowledgeView from '@/views/AdminAiKnowledgeView.vue'
+import AdminAiLogsView from '@/views/AdminAiLogsView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -28,7 +31,10 @@ const router = createRouter({
         { path: 'orders/:orderNo', name: 'order-detail', component: OrderDetailView, props: true },
         { path: 'payments/:payNo', name: 'payment-result', component: PaymentResultView, props: true },
         { path: 'seckill', name: 'seckill', component: SeckillView },
+        { path: 'ai/assistant', name: 'ai-assistant', component: AiAssistantView, meta: { auth: true } },
         { path: 'admin/seckill', name: 'admin-seckill', component: AdminSeckillView, meta: { auth: true, admin: true } },
+        { path: 'admin/ai/knowledge', name: 'admin-ai-knowledge', component: AdminAiKnowledgeView, meta: { auth: true, admin: true } },
+        { path: 'admin/ai/logs', name: 'admin-ai-logs', component: AdminAiLogsView, meta: { auth: true, admin: true } },
         { path: 'me', name: 'profile', component: ProfileView }
       ]
     }

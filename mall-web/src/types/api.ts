@@ -268,3 +268,55 @@ export interface PromotionOperationLog {
   detail: string | null
   createdAt?: string
 }
+
+export interface AiReference {
+  docId: number
+  docTitle: string
+  category: string
+  content: string
+  score?: number | null
+}
+
+export interface AiChatResponse {
+  conversationId: string
+  answer: string
+  references: AiReference[]
+  toolResult?: unknown
+}
+
+export interface AiConversation {
+  id: string
+  title: string
+  updatedAt?: string
+}
+
+export interface AiMessage {
+  id: string | number
+  roleCode: 'USER' | 'ASSISTANT'
+  content: string
+  referencesJson?: string | null
+  toolResultJson?: string | null
+  createdAt?: string
+}
+
+export interface KnowledgeDoc {
+  id: string
+  title: string
+  category: string
+  content: string
+  status: number
+  embeddingStatus: number
+  lastEmbeddingError?: string | null
+  updatedAt?: string
+}
+
+export interface AiLog {
+  id: number
+  conversationId?: number | null
+  userId?: number | null
+  name: string
+  status: number
+  elapsedMs: number
+  errorMessage?: string | null
+  createdAt?: string
+}

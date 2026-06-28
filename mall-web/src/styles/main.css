@@ -2036,6 +2036,11 @@ textarea {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
+.admin-form-row.three {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .admin-form-row.four > .el-button {
   width: 100%;
 }
@@ -2064,6 +2069,183 @@ textarea {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.ai-page {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 0;
+  min-height: calc(100vh - 96px);
+  padding: 0;
+  background: #fff;
+}
+
+.ai-sidebar,
+.ai-chat-panel {
+  min-width: 0;
+  background: #fff;
+}
+
+.ai-sidebar {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  padding: 16px;
+  border-right: 1px solid #edf0f2;
+}
+
+.ai-sidebar-head,
+.ai-chat-head,
+.ai-input-row {
+  display: flex;
+  align-items: center;
+}
+
+.ai-sidebar-head {
+  justify-content: space-between;
+  margin-bottom: 8px;
+  color: #121923;
+}
+
+.ai-session-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 34px;
+  align-items: center;
+  min-height: 46px;
+  color: #425363;
+  border-radius: 8px;
+}
+
+.ai-session-row.active,
+.ai-session-row:hover {
+  color: var(--shop-red);
+  background: #fff2ea;
+}
+
+.ai-session-item {
+  display: grid;
+  gap: 4px;
+  min-height: 46px;
+  padding: 10px 8px 10px 12px;
+  text-align: left;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.ai-session-item span,
+.ai-session-item small {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ai-session-item small {
+  color: #8b98a5;
+}
+
+.ai-session-delete {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  margin-right: 4px;
+  color: #8b98a5;
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  opacity: 0;
+}
+
+.ai-session-row.active .ai-session-delete,
+.ai-session-row:hover .ai-session-delete,
+.ai-session-delete:focus-visible {
+  opacity: 1;
+}
+
+.ai-session-delete:hover {
+  color: #b42318;
+  background: #ffe2dc;
+}
+
+.ai-chat-panel {
+  display: grid;
+  grid-template-rows: minmax(420px, 1fr) auto;
+  overflow: hidden;
+}
+
+.ai-chat-head {
+  justify-content: space-between;
+  padding: 18px;
+  border-bottom: 1px solid #e1e7ed;
+}
+
+.ai-chat-head h1 {
+  margin: 10px 0 4px;
+  color: #121923;
+  font-size: 26px;
+}
+
+.ai-chat-head p {
+  margin: 0;
+  color: #64727f;
+}
+
+.ai-message-list {
+  display: grid;
+  align-content: start;
+  gap: 16px;
+  max-width: 860px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 32px 20px;
+  overflow: auto;
+}
+
+.ai-empty {
+  align-self: center;
+  justify-self: center;
+  padding: 120px 24px 24px;
+  color: #121923;
+  background: transparent;
+  border: 0;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.ai-message {
+  max-width: min(720px, 82%);
+  display: grid;
+  padding: 12px 14px;
+  color: #121923;
+  background: #f4f6f8;
+  border: 0;
+  border-radius: 8px;
+}
+
+.ai-message.user {
+  justify-self: end;
+  color: #121923;
+  background: #ffece5;
+}
+
+.ai-message p {
+  margin: 0;
+  line-height: 1.65;
+  white-space: pre-wrap;
+}
+
+.ai-input-row {
+  gap: 10px;
+  max-width: 860px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 16px 20px 24px;
+  border-top: 0;
 }
 
 .work-grid {
@@ -2566,6 +2748,7 @@ textarea {
   .admin-metrics,
   .member-dashboard,
   .profile-quick-actions,
+  .ai-page,
   .admin-form-row.four {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -2683,7 +2866,9 @@ textarea {
   .member-dashboard,
   .profile-quick-actions,
   .admin-form-row.two,
-  .admin-form-row.four {
+  .admin-form-row.three,
+  .admin-form-row.four,
+  .ai-page {
     grid-template-columns: 1fr;
   }
 

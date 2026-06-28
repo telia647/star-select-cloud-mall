@@ -9,6 +9,14 @@ x-mall-app-env: &mall-app-env
   MALL_REDIS_PORT: 6379
   MALL_ROCKETMQ_NAME_SERVER: rocketmq-namesrv:9876
   MALL_SENTINEL_DASHBOARD: ${MALL_SENTINEL_DASHBOARD:-sentinel-dashboard:8858}
+  MALL_MILVUS_HOST: milvus
+  MALL_MILVUS_PORT: 19530
+  MALL_AI_DEEPSEEK_API_KEY: ${MALL_AI_DEEPSEEK_API_KEY:-}
+  MALL_AI_DEEPSEEK_BASE_URL: ${MALL_AI_DEEPSEEK_BASE_URL:-https://api.deepseek.com}
+  MALL_AI_DEEPSEEK_CHAT_MODEL: ${MALL_AI_DEEPSEEK_CHAT_MODEL:-deepseek-chat}
+  MALL_AI_EMBEDDING_API_KEY: ${MALL_AI_EMBEDDING_API_KEY:-}
+  MALL_AI_EMBEDDING_BASE_URL: ${MALL_AI_EMBEDDING_BASE_URL:-https://api.openai.com}
+  MALL_AI_EMBEDDING_MODEL: ${MALL_AI_EMBEDDING_MODEL:-text-embedding-3-small}
   MALL_CORS_ALLOWED_ORIGIN_PATTERNS: http://localhost:5173,http://localhost:4173
   MALL_JWT_SECRET: ${MALL_JWT_SECRET:-replace-with-at-least-32-byte-secret-for-local}
 
@@ -159,6 +167,22 @@ services:
     ports:
       - "8086:8086"
 
+  mall-ai:
+    image: mall-ai:local
+    build:
+      <<: *mall-build
+      args:
+        SERVICE: mall-ai
+    depends_on:
+      - mysql
+      - nacos
+      - milvus
+      - mall-order
+    environment:
+      <<: *mall-app-env
+    ports:
+      - "8090:8090"
+
   mall-gateway:
     image: mall-gateway:local
     build:
@@ -175,6 +199,7 @@ services:
       - mall-order
       - mall-inventory
       - mall-payment
+      - mall-ai
     environment:
       <<: *mall-app-env
     ports:

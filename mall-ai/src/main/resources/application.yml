@@ -1,0 +1,82 @@
+server:
+  port: 8090
+
+spring:
+  application:
+    name: mall-ai
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${MALL_NACOS_ADDR:${MALL_VM_HOST:localhost}:8848}
+  datasource:
+    url: jdbc:mysql://${MALL_MYSQL_HOST:${MALL_VM_HOST:localhost}}:${MALL_MYSQL_PORT:3306}/mall_ai?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    username: ${MALL_MYSQL_USERNAME:root}
+    password: ${MALL_MYSQL_PASSWORD:root}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+  ai:
+    model:
+      chat: deepseek
+      embedding: openai
+    deepseek:
+      api-key: ${MALL_AI_DEEPSEEK_API_KEY:}
+      base-url: ${MALL_AI_DEEPSEEK_BASE_URL:https://api.deepseek.com}
+      chat:
+        options:
+          model: ${MALL_AI_DEEPSEEK_CHAT_MODEL:deepseek-chat}
+          temperature: ${MALL_AI_CHAT_TEMPERATURE:0.2}
+    openai:
+      chat:
+        enabled: false
+      api-key: ${MALL_AI_EMBEDDING_API_KEY:}
+      base-url: ${MALL_AI_EMBEDDING_BASE_URL:https://api.openai.com}
+      embedding:
+        options:
+          model: ${MALL_AI_EMBEDDING_MODEL:text-embedding-3-small}
+    vectorstore:
+      milvus:
+        client:
+          host: ${MALL_MILVUS_HOST:${MALL_VM_HOST:localhost}}
+          port: ${MALL_MILVUS_PORT:19530}
+          connect-timeout-ms: ${MALL_MILVUS_CONNECT_TIMEOUT_MS:30000}
+        collection-name: ${MALL_MILVUS_COLLECTION:mall_knowledge_chunk}
+        database-name: ${MALL_MILVUS_DATABASE:default}
+        embedding-dimension: ${MALL_MILVUS_EMBEDDING_DIMENSION:1024}
+        initialize-schema: true
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      id-type: assign_id
+
+mall:
+  jwt:
+    secret: ${MALL_JWT_SECRET:mall-demo-jwt-secret-key-for-local-development}
+  ai:
+    rag:
+      top-k: ${MALL_AI_RAG_TOP_K:5}
+      similarity-threshold: ${MALL_AI_RAG_SIMILARITY_THRESHOLD:0.65}
+      chunk-size: ${MALL_AI_CHUNK_SIZE:700}
+      chunk-overlap: ${MALL_AI_CHUNK_OVERLAP:100}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%X{traceId}] %logger{36} - %msg%n"

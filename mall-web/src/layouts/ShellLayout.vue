@@ -2,6 +2,7 @@
 import { computed, onMounted } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import {
+  Bot,
   BadgeCheck,
   Boxes,
   Flame,
@@ -23,6 +24,7 @@ const authStore = useAuthStore()
 const cartStore = useCartStore()
 
 const navItems = [
+  { path: '/ai/assistant', label: '智能客服', icon: Bot },
   { path: '/products', label: '商品', icon: PackageSearch },
   { path: '/seckill', label: '秒杀', icon: Flame },
   { path: '/cart', label: '购物车', icon: ShoppingCart },
@@ -32,6 +34,7 @@ const navItems = [
 const visibleNavItems = computed(() => {
   const items = [...navItems]
   if (authStore.isAdmin) {
+    items.push({ path: '/admin/ai/knowledge', label: '知识库', icon: Bot })
     items.push({ path: '/admin/seckill', label: '运营', icon: Settings })
   }
   return items

@@ -8,7 +8,9 @@ param(
     [string]$RedisHost = $env:MALL_REDIS_HOST,
     [string]$RedisPort = $env:MALL_REDIS_PORT,
     [string]$RocketMqNameServer = $env:MALL_ROCKETMQ_NAME_SERVER,
-    [string]$SentinelDashboard = $env:MALL_SENTINEL_DASHBOARD
+    [string]$SentinelDashboard = $env:MALL_SENTINEL_DASHBOARD,
+    [string]$MilvusHost = $env:MALL_MILVUS_HOST,
+    [string]$MilvusPort = $env:MALL_MILVUS_PORT
 )
 
 $ErrorActionPreference = "Continue"
@@ -49,6 +51,12 @@ if ([string]::IsNullOrWhiteSpace($RocketMqNameServer)) {
 }
 if ([string]::IsNullOrWhiteSpace($SentinelDashboard)) {
     $SentinelDashboard = "$VmHost`:8858"
+}
+if ([string]::IsNullOrWhiteSpace($MilvusHost)) {
+    $MilvusHost = $VmHost
+}
+if ([string]::IsNullOrWhiteSpace($MilvusPort)) {
+    $MilvusPort = "19530"
 }
 
 function Split-Endpoint {
@@ -94,6 +102,7 @@ $allOk = (Test-Port -Name "RocketMQ NameServer" -TargetHost $rocketmq.Host -Port
 $allOk = (Test-Port -Name "RocketMQ Broker 10909" -TargetHost $VmHost -Port 10909) -and $allOk
 $allOk = (Test-Port -Name "RocketMQ Broker 10911" -TargetHost $VmHost -Port 10911) -and $allOk
 $allOk = (Test-Port -Name "Sentinel Dashboard" -TargetHost $sentinel.Host -Port $sentinel.Port) -and $allOk
+$allOk = (Test-Port -Name "Milvus" -TargetHost $MilvusHost -Port ([int]$MilvusPort)) -and $allOk
 
 $mysql = Get-Command mysql -ErrorAction SilentlyContinue
 if ($mysql -and $mysqlPortOk) {
@@ -145,6 +154,8 @@ Write-Host "MALL_REDIS_HOST=$RedisHost"
 Write-Host "MALL_REDIS_PORT=$RedisPort"
 Write-Host "MALL_ROCKETMQ_NAME_SERVER=$RocketMqNameServer"
 Write-Host "MALL_SENTINEL_DASHBOARD=$SentinelDashboard"
+Write-Host "MALL_MILVUS_HOST=$MilvusHost"
+Write-Host "MALL_MILVUS_PORT=$MilvusPort"
 
 if (-not $allOk) {
     exit 1
