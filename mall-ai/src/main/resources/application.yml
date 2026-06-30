@@ -13,6 +13,12 @@ spring:
     username: ${MALL_MYSQL_USERNAME:root}
     password: ${MALL_MYSQL_PASSWORD:root}
     driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      connection-timeout: 3000
+      max-lifetime: 600000
+      maximum-pool-size: ${MALL_AI_DB_POOL_MAX:20}
+      minimum-idle: ${MALL_AI_DB_POOL_MIN_IDLE:5}
+      idle-timeout: 300000
   flyway:
     enabled: true
     baseline-on-migrate: true
@@ -59,9 +65,11 @@ mall:
   ai:
     rag:
       top-k: ${MALL_AI_RAG_TOP_K:5}
-      similarity-threshold: ${MALL_AI_RAG_SIMILARITY_THRESHOLD:0.65}
+      similarity-threshold: ${MALL_AI_RAG_SIMILARITY_THRESHOLD:0.3}
       chunk-size: ${MALL_AI_CHUNK_SIZE:700}
       chunk-overlap: ${MALL_AI_CHUNK_OVERLAP:100}
+      retrieve-timeout-ms: ${MALL_AI_RAG_RETRIEVE_TIMEOUT_MS:15000}
+      tool-timeout-ms: ${MALL_AI_RAG_TOOL_TIMEOUT_MS:8000}
 
 management:
   endpoints:

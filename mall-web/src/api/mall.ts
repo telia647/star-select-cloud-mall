@@ -9,6 +9,7 @@ import type {
   AiMessage,
   LoginResponse,
   KnowledgeDoc,
+  KnowledgeSyncResult,
   MemberBenefit,
   MemberCoupon,
   OrderCreateResponse,
@@ -348,7 +349,7 @@ export function createKnowledgeDoc(payload: { title: string; category: string; c
   return http.post<KnowledgeDoc, KnowledgeDoc>('/ai/admin/knowledge/docs', payload)
 }
 
-export function updateKnowledgeDoc(id: number, payload: { title: string; category: string; content: string; status: number }) {
+export function updateKnowledgeDoc(id: string, payload: { title: string; category: string; content: string; status: number }) {
   return http.put<KnowledgeDoc, KnowledgeDoc>(`/ai/admin/knowledge/docs/${id}`, payload)
 }
 
@@ -361,7 +362,7 @@ export function indexKnowledgeDoc(id: string) {
 }
 
 export function syncProductKnowledge() {
-  return http.post<KnowledgeDoc[], KnowledgeDoc[]>('/ai/admin/knowledge/docs/sync-products', undefined, { timeout: 120000 })
+  return http.post<KnowledgeSyncResult, KnowledgeSyncResult>('/ai/admin/knowledge/docs/sync-products', undefined, { timeout: 120000 })
 }
 
 export function listAiModelCallLogs() {

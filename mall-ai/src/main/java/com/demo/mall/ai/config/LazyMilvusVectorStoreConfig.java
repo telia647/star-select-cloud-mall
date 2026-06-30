@@ -4,13 +4,14 @@ import io.milvus.client.MilvusServiceClient;
 import io.milvus.param.ConnectParam;
 import io.milvus.param.IndexType;
 import io.milvus.param.MetricType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.ai.vectorstore.filter.Filter;
 import org.springframework.ai.vectorstore.milvus.MilvusVectorStore;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -22,55 +23,22 @@ import java.util.concurrent.TimeUnit;
 public class LazyMilvusVectorStoreConfig {
 
     @Bean
-    public VectorStore vectorStore(EmbeddingModel embeddingModel,
-                                   @Value("${spring.ai.vectorstore.milvus.client.host:localhost}") String host,
-                                   @Value("${spring.ai.vectorstore.milvus.client.port:19530}") int port,
-                                   @Value("${spring.ai.vectorstore.milvus.database-name:default}") String databaseName,
-                                   @Value("${spring.ai.vectorstore.milvus.collection-name:mall_knowledge_chunk}") String collectionName,
-                                   @Value("${spring.ai.vectorstore.milvus.embedding-dimension:1024}") int embeddingDimension,
-                                   @Value("${spring.ai.vectorstore.milvus.initialize-schema:true}") boolean initializeSchema,
-                                   @Value("${spring.ai.vectorstore.milvus.index-type:IVF_FLAT}") String indexType,
-                                   @Value("${spring.ai.vectorstore.milvus.metric-type:COSINE}") String metricType,
-                                   @Value("${spring.ai.vectorstore.milvus.index-parameters:{\"nlist\":1024}}") String indexParameters,
-                                   @Value("${spring.ai.vectorstore.milvus.client.connect-timeout-ms:10000}") long connectTimeoutMs,
-                                   @Value("${spring.ai.vectorstore.milvus.client.keep-alive-time-ms:55000}") long keepAliveTimeMs,
-                                   @Value("${spring.ai.vectorstore.milvus.client.keep-alive-timeout-ms:20000}") long keepAliveTimeoutMs,
-                                   @Value("${spring.ai.vectorstore.milvus.client.rpc-deadline-ms:0}") long rpcDeadlineMs,
-                                   @Value("${spring.ai.vectorstore.milvus.client.idle-timeout-ms:86400000}") long idleTimeoutMs,
-                                   @Value("${spring.ai.vectorstore.milvus.client.secure:false}") boolean secure,
-                                   @Value("${spring.ai.vectorstore.milvus.client.username:root}") String username,
-                                   @Value("${spring.ai.vectorstore.milvus.client.password:milvus}") String password) {
-        LazyMilvusProperties properties = new LazyMilvusProperties(
-                host,
-                port,
-                databaseName,
-                collectionName,
-                embeddingDimension,
-                initializeSchema,
-                indexType,
-                metricType,
-                indexParameters,
-                connectTimeoutMs,
-                keepAliveTimeMs,
-                keepAliveTimeoutMs,
-                rpcDeadlineMs,
-                idleTimeoutMs,
-                secure,
-                username,
-                password
-        );
+    public VectorStore vectorStore(EmbeddingModel embeddingModel, MilvusClientProperties properties) {
         return new LazyMilvusVectorStore(embeddingModel, properties);
     }
 
     private static final class LazyMilvusVectorStore implements VectorStore {
 
+        private static final Logger log = LoggerFactory.getLogger(LazyMilvusVectorStore.class);
+        private static final String GENERIC_UNAVAILABLE_MESSAGE = "向量库暂时不可用，请稍后重试";
+
         private final EmbeddingModel embeddingModel;
-        private final LazyMilvusProperties properties;
+        private final MilvusClientProperties properties;
         private volatile MilvusVectorStore delegate;
         private volatile long unavailableUntil;
         private volatile String lastFailureMessage;
 
-        private LazyMilvusVectorStore(EmbeddingModel embeddingModel, LazyMilvusProperties properties) {
+        private LazyMilvusVectorStore(EmbeddingModel embeddingModel, MilvusClientProperties properties) {
             this.embeddingModel = embeddingModel;
             this.properties = properties;
         }
@@ -121,8 +89,13 @@ public class LazyMilvusVectorStoreConfig {
                 try {
                     this.delegate = createDelegate();
                 } catch (RuntimeException ex) {
+                    String msg = ex.getMessage() == null ? "" : ex.getMessage();
+                    if (msg.contains("Proxy is not ready") || msg.contains("not ready yet")) {
+                        this.delegate = null;
+                        throw new IllegalStateException("Milvus 正在启动中，请稍后重试", ex);
+                    }
                     markUnavailable(ex);
-                    throw ex;
+                    throw new IllegalStateException(GENERIC_UNAVAILABLE_MESSAGE, ex);
                 }
                 return this.delegate;
             }
@@ -131,31 +104,33 @@ public class LazyMilvusVectorStoreConfig {
         private void markUnavailable(RuntimeException ex) {
             this.delegate = null;
             this.unavailableUntil = System.currentTimeMillis() + 30_000;
-            this.lastFailureMessage = ex.getMessage() == null ? "向量库暂时不可用" : ex.getMessage();
+            this.lastFailureMessage = GENERIC_UNAVAILABLE_MESSAGE;
+            log.warn("Milvus unavailable, cooldown 30s: {}", ex.getMessage(), ex);
         }
 
         private MilvusVectorStore createDelegate() {
+            MilvusClientProperties.Client client = properties.getClient();
             ConnectParam connectParam = ConnectParam.newBuilder()
-                    .withHost(properties.host())
-                    .withPort(properties.port())
-                    .withDatabaseName(properties.databaseName())
-                    .withConnectTimeout(properties.connectTimeoutMs(), TimeUnit.MILLISECONDS)
-                    .withKeepAliveTime(properties.keepAliveTimeMs(), TimeUnit.MILLISECONDS)
-                    .withKeepAliveTimeout(properties.keepAliveTimeoutMs(), TimeUnit.MILLISECONDS)
-                    .withRpcDeadline(properties.rpcDeadlineMs(), TimeUnit.MILLISECONDS)
-                    .withSecure(properties.secure())
-                    .withIdleTimeout(properties.idleTimeoutMs(), TimeUnit.MILLISECONDS)
-                    .withAuthorization(properties.username(), properties.password())
+                    .withHost(client.getHost())
+                    .withPort(client.getPort())
+                    .withDatabaseName(properties.getDatabaseName())
+                    .withConnectTimeout(client.getConnectTimeoutMs(), TimeUnit.MILLISECONDS)
+                    .withKeepAliveTime(client.getKeepAliveTimeMs(), TimeUnit.MILLISECONDS)
+                    .withKeepAliveTimeout(client.getKeepAliveTimeoutMs(), TimeUnit.MILLISECONDS)
+                    .withRpcDeadline(client.getRpcDeadlineMs(), TimeUnit.MILLISECONDS)
+                    .withSecure(client.isSecure())
+                    .withIdleTimeout(client.getIdleTimeoutMs(), TimeUnit.MILLISECONDS)
+                    .withAuthorization(client.getUsername(), client.getPassword())
                     .build();
 
             MilvusVectorStore vectorStore = MilvusVectorStore.builder(new MilvusServiceClient(connectParam), embeddingModel)
-                    .initializeSchema(properties.initializeSchema())
-                    .databaseName(properties.databaseName())
-                    .collectionName(properties.collectionName())
-                    .embeddingDimension(properties.embeddingDimension())
-                    .indexType(IndexType.valueOf(properties.indexType()))
-                    .metricType(MetricType.valueOf(properties.metricType()))
-                    .indexParameters(properties.indexParameters())
+                    .initializeSchema(properties.isInitializeSchema())
+                    .databaseName(properties.getDatabaseName())
+                    .collectionName(properties.getCollectionName())
+                    .embeddingDimension(properties.getEmbeddingDimension())
+                    .indexType(IndexType.valueOf(properties.getIndexType()))
+                    .metricType(MetricType.valueOf(properties.getMetricType()))
+                    .indexParameters(properties.getIndexParameters())
                     .build();
             try {
                 vectorStore.afterPropertiesSet();
@@ -164,24 +139,5 @@ public class LazyMilvusVectorStoreConfig {
             }
             return vectorStore;
         }
-    }
-
-    private record LazyMilvusProperties(String host,
-                                        int port,
-                                        String databaseName,
-                                        String collectionName,
-                                        int embeddingDimension,
-                                        boolean initializeSchema,
-                                        String indexType,
-                                        String metricType,
-                                        String indexParameters,
-                                        long connectTimeoutMs,
-                                        long keepAliveTimeMs,
-                                        long keepAliveTimeoutMs,
-                                        long rpcDeadlineMs,
-                                        long idleTimeoutMs,
-                                        boolean secure,
-                                        String username,
-                                        String password) {
     }
 }

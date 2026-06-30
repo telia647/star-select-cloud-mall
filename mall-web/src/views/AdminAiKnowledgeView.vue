@@ -18,7 +18,7 @@ const saving = ref(false)
 const indexingId = ref<string>()
 const syncingProducts = ref(false)
 const defaultCategory = '\u5E38\u89C1\u95EE\u9898'
-const form = reactive({ id: undefined as number | undefined, title: '', category: defaultCategory, content: '', status: 1 })
+const form = reactive({ id: undefined as string | undefined, title: '', category: defaultCategory, content: '', status: 1 })
 const categoryOptions = [
   { label: '\u5E38\u89C1\u95EE\u9898', value: '\u5E38\u89C1\u95EE\u9898' },
   { label: '\u9000\u6B3E\u552E\u540E', value: '\u9000\u6B3E\u552E\u540E' },
@@ -72,6 +72,17 @@ async function remove(row: KnowledgeDoc) {
 }
 
 async function indexDoc(row: KnowledgeDoc) {
+  if (row.embeddingStatus === 1) {
+    try {
+      await ElMessageBox.confirm(
+        `\u300C${row.title}\u300D\u5DF2\u7D22\u5F15\uFF0C\u91CD\u65B0\u7D22\u5F15\u4F1A\u5148\u5220\u9664\u65E7\u5411\u91CF\u518D\u5199\u5165\u3002\u786E\u8BA4\u7EE7\u7EED\uFF1F`,
+        '\u91CD\u65B0\u7D22\u5F15\u786E\u8BA4',
+        { confirmButtonText: '\u91CD\u65B0\u7D22\u5F15', cancelButtonText: '\u53D6\u6D88', type: 'warning' }
+      )
+    } catch {
+      return
+    }
+  }
   indexingId.value = row.id
   try {
     await indexKnowledgeDoc(row.id)
@@ -85,14 +96,23 @@ async function indexDoc(row: KnowledgeDoc) {
 }
 
 async function syncProducts() {
+  try {
+    await ElMessageBox.confirm(
+      '\u5C06\u540C\u6B65\u6240\u6709\u4E0A\u67B6\u5546\u54C1\u5230\u77E5\u8BC6\u5E93\u3002\u5DF2\u5B58\u5728\u7684\u5546\u54C1\u6587\u6863\u4F1A\u5148\u5220\u9664\u65E7\u5411\u91CF\u518D\u91CD\u65B0\u7D22\u5F15\u3002',
+      '\u540C\u6B65\u5546\u57CE\u5546\u54C1\u786E\u8BA4',
+      { confirmButtonText: '\u5F00\u59CB\u540C\u6B65', cancelButtonText: '\u53D6\u6D88', type: 'info' }
+    )
+  } catch {
+    return
+  }
   syncingProducts.value = true
   try {
     const result = await syncProductKnowledge()
-    const failedCount = result.filter((item) => item.embeddingStatus === 2).length
-    if (failedCount > 0) {
-      ElMessage.warning(`\u5546\u57CE\u5546\u54C1\u77E5\u8BC6\u5E93\u5DF2\u540C\u6B65\uFF0C${failedCount} \u6761\u5411\u91CF\u7D22\u5F15\u5931\u8D25`)
+    const msg = `\u65B0\u589E ${result.created} \u7BC7\uFF0C\u66F4\u65B0 ${result.updated} \u7BC7\uFF0C\u5931\u8D25 ${result.failed} \u7BC7`
+    if (result.failed > 0) {
+      ElMessage.warning(`\u5546\u57CE\u5546\u54C1\u77E5\u8BC6\u5E93\u5DF2\u540C\u6B65\uFF1A${msg}`)
     } else {
-      ElMessage.success('\u5546\u57CE\u5546\u54C1\u77E5\u8BC6\u5E93\u540C\u6B65\u5B8C\u6210')
+      ElMessage.success(`\u5546\u57CE\u5546\u54C1\u77E5\u8BC6\u5E93\u540C\u6B65\u5B8C\u6210\uFF1A${msg}`)
     }
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : '\u5546\u57CE\u5546\u54C1\u77E5\u8BC6\u5E93\u540C\u6B65\u5931\u8D25')

@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.demo.mall.ai.config.AiProperties;
 import com.demo.mall.ai.dto.KnowledgeDocRequest;
 import com.demo.mall.ai.dto.KnowledgeDocResponse;
+import com.demo.mall.ai.dto.KnowledgeSyncResultResponse;
 import com.demo.mall.ai.entity.AiKnowledgeChunk;
 import com.demo.mall.ai.entity.AiKnowledgeDoc;
 import com.demo.mall.ai.mapper.AiKnowledgeChunkMapper;
@@ -16,6 +17,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -39,19 +41,22 @@ public class KnowledgeService {
     private final VectorStore vectorStore;
     private final AiProperties aiProperties;
     private final JdbcTemplate jdbcTemplate;
+    private final TransactionTemplate transactionTemplate;
 
     public KnowledgeService(AiKnowledgeDocMapper docMapper,
                             AiKnowledgeChunkMapper chunkMapper,
                             KnowledgeChunker chunker,
                             VectorStore vectorStore,
                             AiProperties aiProperties,
-                            JdbcTemplate jdbcTemplate) {
+                            JdbcTemplate jdbcTemplate,
+                            TransactionTemplate transactionTemplate) {
         this.docMapper = docMapper;
         this.chunkMapper = chunkMapper;
         this.chunker = chunker;
         this.vectorStore = vectorStore;
         this.aiProperties = aiProperties;
         this.jdbcTemplate = jdbcTemplate;
+        this.transactionTemplate = transactionTemplate;
     }
 
     public List<KnowledgeDocResponse> list(String keyword, String category, Integer status) {
@@ -103,90 +108,125 @@ public class KnowledgeService {
         docMapper.deleteById(id);
     }
 
-    @Transactional
     public KnowledgeDocResponse index(Long id) {
         AiKnowledgeDoc doc = getDoc(id);
+        List<Document> documents;
         try {
-            deleteChunks(id);
-            List<String> parts = chunker.split(
-                    doc.getContent(),
-                    aiProperties.getRag().getChunkSize(),
-                    aiProperties.getRag().getChunkOverlap()
-            );
-            if (parts.isEmpty()) {
-                throw new BizException(ErrorCode.BAD_REQUEST, "knowledge content is empty");
-            }
-            for (int i = 0; i < parts.size(); i++) {
-                String vectorId = "doc-" + id + "-chunk-" + i;
-                try { vectorStore.delete(List.of(vectorId)); } catch (RuntimeException ignored) {}
-                Map<String, Object> metadata = new HashMap<>();
-                metadata.put("docId", id);
-                metadata.put("docTitle", doc.getTitle());
-                metadata.put("category", doc.getCategory());
-                metadata.put("status", doc.getStatus());
-                metadata.put("chunkNo", i);
-                vectorStore.add(List.of(new Document(vectorId, parts.get(i), metadata)));
-
-                AiKnowledgeChunk chunk = new AiKnowledgeChunk();
-                chunk.setDocId(id);
-                chunk.setChunkNo(i);
-                chunk.setContent(parts.get(i));
-                chunk.setVectorId(vectorId);
-                chunk.setTokenCount(parts.get(i).length());
-                chunkMapper.insert(chunk);
-            }
-            doc.setEmbeddingStatus(EMBEDDING_INDEXED);
-            doc.setLastEmbeddingError(null);
+            documents = transactionTemplate.execute(status -> rebuildChunksAndCollect(doc));
         } catch (RuntimeException ex) {
-            doc.setEmbeddingStatus(EMBEDDING_FAILED);
-            doc.setLastEmbeddingError(trim(errorMessage(ex), 512));
+            markIndexFailed(doc, ex);
+            return toResponse(doc);
         }
-        docMapper.updateById(doc);
+        if (documents == null || documents.isEmpty()) {
+            return toResponse(doc);
+        }
+        try {
+            vectorStore.add(documents);
+            markIndexSucceeded(doc);
+        } catch (RuntimeException ex) {
+            markIndexFailed(doc, ex);
+        }
         return toResponse(doc);
     }
 
-    @Transactional
-    public List<KnowledgeDocResponse> syncProducts(Long operatorId) {
+    private List<Document> rebuildChunksAndCollect(AiKnowledgeDoc doc) {
+        Long id = doc.getId();
+        deleteChunks(id);
+        List<String> parts = chunker.split(
+                doc.getContent(),
+                aiProperties.getRag().getChunkSize(),
+                aiProperties.getRag().getChunkOverlap()
+        );
+        if (parts.isEmpty()) {
+            throw new BizException(ErrorCode.BAD_REQUEST, "knowledge content is empty");
+        }
+        List<Document> documents = new java.util.ArrayList<>(parts.size());
+        for (int i = 0; i < parts.size(); i++) {
+            AiKnowledgeChunk chunk = new AiKnowledgeChunk();
+            chunk.setDocId(id);
+            chunk.setChunkNo(i);
+            chunk.setContent(parts.get(i));
+            chunk.setVectorId("doc-" + id + "-chunk-" + i);
+            chunk.setTokenCount(parts.get(i).length());
+            chunkMapper.insert(chunk);
+
+            Map<String, Object> metadata = new HashMap<>();
+            metadata.put("docId", id);
+            metadata.put("docTitle", doc.getTitle());
+            metadata.put("category", doc.getCategory());
+            metadata.put("status", doc.getStatus());
+            metadata.put("chunkNo", chunk.getChunkNo());
+            documents.add(new Document(chunk.getVectorId(), chunk.getContent(), metadata));
+        }
+        return documents;
+    }
+
+    private void markIndexSucceeded(AiKnowledgeDoc doc) {
+        transactionTemplate.executeWithoutResult(status -> {
+            doc.setEmbeddingStatus(EMBEDDING_INDEXED);
+            doc.setLastEmbeddingError(null);
+            docMapper.updateById(doc);
+        });
+    }
+
+    private void markIndexFailed(AiKnowledgeDoc doc, RuntimeException ex) {
+        transactionTemplate.executeWithoutResult(status -> {
+            doc.setEmbeddingStatus(EMBEDDING_FAILED);
+            doc.setLastEmbeddingError(trim(errorMessage(ex), 512));
+            docMapper.updateById(doc);
+        });
+    }
+
+    public KnowledgeSyncResultResponse syncProducts(Long operatorId) {
         List<ProductKnowledgeRow> rows;
         try {
             rows = listProductRows();
         } catch (DataAccessException ex) {
             throw new BizException(ErrorCode.INTERNAL_ERROR, "同步商品知识失败：" + trim(errorMessage(ex), 240));
         }
-        List<KnowledgeDocResponse> docs = new java.util.ArrayList<>();
+        List<KnowledgeDocResponse> items = new java.util.ArrayList<>();
+        int created = 0;
+        int updated = 0;
+        int failed = 0;
+
         if (rows.isEmpty()) {
-            KnowledgeDocResponse doc = upsertProductDoc(
-                    operatorId,
-                    "商城商品总览",
-                    "当前商城暂无已上架商品。"
-            );
-            docs.add(index(doc.id()));
-            return docs;
+            UpsertResult r = upsertProductDoc(operatorId, "商城商品总览", "当前商城暂无已上架商品。");
+            KnowledgeDocResponse indexed = index(r.response().id());
+            items.add(indexed);
+            if (indexed.embeddingStatus() == EMBEDDING_FAILED) failed++;
+            else if (r.created()) created++; else updated++;
+            return new KnowledgeSyncResultResponse(created, updated, failed, items);
         }
 
-        docs.add(index(upsertProductDoc(operatorId, "商城商品总览", buildCatalogOverview(rows)).id()));
-        rows.stream()
-                .collect(Collectors.groupingBy(ProductKnowledgeRow::categoryName, java.util.TreeMap::new, Collectors.toList()))
-                .forEach((category, categoryRows) -> {
-                    KnowledgeDocResponse doc = upsertProductDoc(
-                            operatorId,
-                            "商品分类-" + category,
-                            buildCategoryDoc(category, categoryRows)
-                    );
-                    docs.add(index(doc.id()));
-                });
-        for (ProductKnowledgeRow row : rows) {
-            KnowledgeDocResponse doc = upsertProductDoc(
-                    operatorId,
-                    "商品-" + row.productName(),
-                    buildProductDoc(row)
-            );
-            docs.add(index(doc.id()));
+        UpsertResult overview = upsertProductDoc(operatorId, "商城商品总览", buildCatalogOverview(rows));
+        KnowledgeDocResponse overviewIndexed = index(overview.response().id());
+        items.add(overviewIndexed);
+        if (overviewIndexed.embeddingStatus() == EMBEDDING_FAILED) failed++;
+        else if (overview.created()) created++; else updated++;
+
+        var categoryMap = rows.stream()
+                .collect(Collectors.groupingBy(ProductKnowledgeRow::categoryName, java.util.TreeMap::new, Collectors.toList()));
+        for (var entry : categoryMap.entrySet()) {
+            UpsertResult r = upsertProductDoc(operatorId, "商品分类-" + entry.getKey(), buildCategoryDoc(entry.getKey(), entry.getValue()));
+            KnowledgeDocResponse indexed = index(r.response().id());
+            items.add(indexed);
+            if (indexed.embeddingStatus() == EMBEDDING_FAILED) failed++;
+            else if (r.created()) created++; else updated++;
         }
-        return docs;
+        for (ProductKnowledgeRow row : rows) {
+            UpsertResult r = upsertProductDoc(operatorId, "商品-" + row.productName(), buildProductDoc(row));
+            KnowledgeDocResponse indexed = index(r.response().id());
+            items.add(indexed);
+            if (indexed.embeddingStatus() == EMBEDDING_FAILED) failed++;
+            else if (r.created()) created++; else updated++;
+        }
+        return new KnowledgeSyncResultResponse(created, updated, failed, items);
     }
 
-    private KnowledgeDocResponse upsertProductDoc(Long operatorId, String title, String content) {
+    private record UpsertResult(KnowledgeDocResponse response, boolean created) {
+    }
+
+    private UpsertResult upsertProductDoc(Long operatorId, String title, String content) {
         AiKnowledgeDoc existing = docMapper.selectOne(new LambdaQueryWrapper<AiKnowledgeDoc>()
                 .eq(AiKnowledgeDoc::getCategory, "商品知识")
                 .eq(AiKnowledgeDoc::getTitle, title)
@@ -201,7 +241,7 @@ public class KnowledgeService {
             doc.setCreatedBy(operatorId);
             doc.setUpdatedBy(operatorId);
             docMapper.insert(doc);
-            return toResponse(doc);
+            return new UpsertResult(toResponse(doc), true);
         }
         existing.setContent(content);
         existing.setStatus(DOC_ENABLED);
@@ -209,7 +249,7 @@ public class KnowledgeService {
         existing.setLastEmbeddingError(null);
         existing.setUpdatedBy(operatorId);
         docMapper.updateById(existing);
-        return toResponse(existing);
+        return new UpsertResult(toResponse(existing), false);
     }
 
     private List<ProductKnowledgeRow> listProductRows() {
