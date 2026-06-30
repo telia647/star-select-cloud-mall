@@ -2,6 +2,7 @@ package com.demo.mall.ai.controller;
 
 import com.demo.mall.ai.dto.KnowledgeDocRequest;
 import com.demo.mall.ai.dto.KnowledgeDocResponse;
+import com.demo.mall.ai.dto.KnowledgeSyncResultResponse;
 import com.demo.mall.ai.service.KnowledgeService;
 import com.demo.mall.common.api.Result;
 import com.demo.mall.common.security.context.RoleGuard;
@@ -79,8 +80,8 @@ public class AiAdminKnowledgeController {
     }
 
     @PostMapping("/sync-products")
-    public Result<List<KnowledgeDocResponse>> syncProducts(@RequestHeader(SecurityHeaders.USER_ID) Long userId,
-                                                           @RequestHeader(SecurityHeaders.USER_ROLE) String roleCode) {
+    public Result<KnowledgeSyncResultResponse> syncProducts(@RequestHeader(SecurityHeaders.USER_ID) Long userId,
+                                                            @RequestHeader(SecurityHeaders.USER_ROLE) String roleCode) {
         RoleGuard.requireAdmin(roleCode);
         return Result.success(knowledgeService.syncProducts(userId));
     }

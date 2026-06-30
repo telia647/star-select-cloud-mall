@@ -310,6 +310,13 @@ export interface KnowledgeDoc {
   updatedAt?: string
 }
 
+export interface KnowledgeSyncResult {
+  created: number
+  updated: number
+  failed: number
+  items: KnowledgeDoc[]
+}
+
 export interface AiLog {
   id: number
   conversationId?: number | null
